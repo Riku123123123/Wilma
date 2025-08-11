@@ -1,0 +1,110 @@
+// Intro näkyy vain ensimmäisellä kerralla
+if(sessionStorage.getItem('introShown')) {
+    document.querySelector('.intro').style.display = 'none';
+    document.querySelector('.container').style.opacity = '1';
+} else {
+    sessionStorage.setItem('introShown', 'true');
+}
+
+// Kello
+function updateClock() {
+    const now = new Date();
+    let h = now.getHours().toString().padStart(2, "0");
+    let m = now.getMinutes().toString().padStart(2, "0");
+    document.getElementById("clock").textContent = `Kello ${h}:${m}`;
+
+    highlightCurrent();
+}
+
+// Säädata Raumalle (OpenWeatherMap API)
+async function updateWeather() {
+    const apiKey = 'd6149ddcc486b4c7e8b6cf842aa88d49'; // Korvaa oikealla API-avaimella
+    const city = 'Rauma,FI';
+    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}&lang=fi`;
+    
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if(data.cod === 200) {
+            const weatherWidget = document.querySelector('.weather-widget');
+            const weatherIcon = weatherWidget.querySelector('.weather-icon');
+            const weatherTemp = weatherWidget.querySelector('.weather-temp');
+            const weatherDetails = weatherWidget.querySelector('.weather-details');
+            
+            const temp = Math.round(data.main.temp);
+            const description = data.weather[0].description;
+            const iconCode = data.weather[0].icon;
+            
+            // Määritä Font Awesome -ikoni säätilan perusteella
+            let iconClass;
+            if(iconCode.includes('01')) iconClass = 'fas fa-sun'; // Selkeä
+            else if(iconCode.includes('02')) iconClass = 'fas fa-cloud-sun'; // Puolipilv.
+            else if(iconCode.includes('03') || iconCode.includes('04')) iconClass = 'fas fa-cloud'; // Pilv.
+            else if(iconCode.includes('09') || iconCode.includes('10')) iconClass = 'fas fa-cloud-rain'; // Sade
+            else if(iconCode.includes('11')) iconClass = 'fas fa-bolt'; // Ukkonen
+            else if(iconCode.includes('13')) iconClass = 'fas fa-snowflake'; // Lumi
+            else if(iconCode.includes('50')) iconClass = 'fas fa-smog'; // Sumu
+            else iconClass = 'fas fa-cloud';
+            
+            weatherIcon.className = `${iconClass} weather-icon`;
+            weatherTemp.textContent = `${temp}°C`;
+            weatherDetails.textContent = `${description.charAt(0).toUpperCase() + description.slice(1)}`;
+        } else {
+            throw new Error('Säätietoja ei saatavilla');
+        }
+    } catch (error) {
+        console.error('Virhe säätietojen haussa:', error);
+        document.querySelector('.weather-temp').textContent = 'Ei yhteyttä';
+    }
+}
+
+// Korostaa nykyisen päivän ja tunnin
+function highlightCurrent() {
+    const now = new Date();
+    let day = now.getDay(); // Ma=1, Su=0
+    let h = now.getHours();
+    let m = now.getMinutes();
+
+    document.querySelectorAll('.day-card').forEach(card => {
+        card.classList.remove('highlight-day');
+        card.querySelectorAll('.lesson').forEach(lesson => lesson.classList.remove('highlight-lesson'));
+        card.querySelector('.meal').classList.remove('highlight-meal');
+    });
+
+    // Viikonloppuna ei korosteta mitään
+    if(day === 0 || day === 6) return;
+
+    const todayCard = document.querySelector(`.day-card[data-day="${day}"]`);
+    if (todayCard) {
+        todayCard.classList.add('highlight-day');
+        todayCard.querySelector('.meal').classList.add('highlight-meal');
+
+        todayCard.querySelectorAll('.lesson').forEach(lesson => {
+            const [lh, lm] = lesson.dataset.time.split(':').map(Number);
+            const lessonStart = lh * 60 + lm;
+            const lessonEnd = lessonStart + 85; // 85 min oppitunti
+            const nowMinutes = h * 60 + m;
+
+            if (nowMinutes >= lessonStart && nowMinutes < lessonEnd) {
+                lesson.classList.add('highlight-lesson');
+            }
+        });
+    }
+}
+
+// Alustus
+updateClock();
+updateWeather();
+setInterval(updateClock, 1000);
+setInterval(updateWeather, 3600000); // Päivitä sää tunnin välein
+
+// Lisää interaktiivisuutta
+document.querySelectorAll('.lesson').forEach(lesson => {
+    lesson.addEventListener('click', function() {
+        alert(`Oppitunnin tiedot:\n${this.querySelector('.lesson-subject').textContent} (${this.querySelector('.lesson-code').textContent})\n` +
+              `Aika: ${this.querySelector('.lesson-time').textContent}\n` +
+              `Sali: ${this.querySelector('.lesson-room')?.textContent || 'Ei tietoa'}\n` +
+              `Opettaja: ${this.querySelector('.lesson-teacher')?.textContent || 'Ei tietoa'}`);
+    });
+});
