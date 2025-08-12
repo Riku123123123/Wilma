@@ -88,7 +88,7 @@ function highlightCurrent() {
         todayCard.querySelectorAll('.lesson').forEach(lesson => {
             const [lh, lm] = lesson.dataset.time.split(':').map(Number);
             const lessonStart = lh * 60 + lm;
-            const lessonEnd = lessonStart + 75; // 85 min oppitunti
+            const lessonEnd = lessonStart + 65;
             const nowSeconds = h * 3600 + m * 60 + s;
             const lessonEndSeconds = lessonEnd * 60;
 
