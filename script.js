@@ -68,7 +68,11 @@ function highlightCurrent() {
 
     document.querySelectorAll('.day-card').forEach(card => {
         card.classList.remove('highlight-day');
-        card.querySelectorAll('.lesson').forEach(lesson => lesson.classList.remove('highlight-lesson'));
+        card.querySelectorAll('.lesson').forEach(lesson => {
+            lesson.classList.remove('highlight-lesson');
+            let remainingSpan = lesson.querySelector('.time-remaining');
+            if (remainingSpan) remainingSpan.remove(); // Poistetaan vanha laskuri
+        });
         card.querySelector('.meal').classList.remove('highlight-meal');
     });
 
@@ -88,6 +92,17 @@ function highlightCurrent() {
 
             if (nowMinutes >= lessonStart && nowMinutes < lessonEnd) {
                 lesson.classList.add('highlight-lesson');
+
+                // Lasketaan jäljellä oleva aika
+                const remainingMinutes = lessonEnd - nowMinutes;
+                const remainingText = document.createElement('span');
+                remainingText.className = 'time-remaining';
+                remainingText.style.marginLeft = '10px';
+                remainingText.style.fontWeight = 'bold';
+                remainingText.style.color = '#ff4444';
+                remainingText.textContent = `(Jäljellä ${remainingMinutes} min)`;
+
+                lesson.querySelector('.lesson-time').appendChild(remainingText);
             }
         });
     }
