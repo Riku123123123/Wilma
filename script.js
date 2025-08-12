@@ -65,13 +65,14 @@ function highlightCurrent() {
     let day = now.getDay(); // Ma=1, Su=0
     let h = now.getHours();
     let m = now.getMinutes();
+    let s = now.getSeconds();
 
     document.querySelectorAll('.day-card').forEach(card => {
         card.classList.remove('highlight-day');
         card.querySelectorAll('.lesson').forEach(lesson => {
             lesson.classList.remove('highlight-lesson');
             let remainingSpan = lesson.querySelector('.time-remaining');
-            if (remainingSpan) remainingSpan.remove(); // Poistetaan vanha laskuri
+            if (remainingSpan) remainingSpan.remove(); // Poista vanha laskuri
         });
         card.querySelector('.meal').classList.remove('highlight-meal');
     });
@@ -88,25 +89,33 @@ function highlightCurrent() {
             const [lh, lm] = lesson.dataset.time.split(':').map(Number);
             const lessonStart = lh * 60 + lm;
             const lessonEnd = lessonStart + 85; // 85 min oppitunti
-            const nowMinutes = h * 60 + m;
+            const nowSeconds = h * 3600 + m * 60 + s;
+            const lessonEndSeconds = lessonEnd * 60;
 
-            if (nowMinutes >= lessonStart && nowMinutes < lessonEnd) {
+            if (nowSeconds >= lessonStart * 60 && nowSeconds < lessonEndSeconds) {
                 lesson.classList.add('highlight-lesson');
 
                 // Lasketaan jäljellä oleva aika
-                const remainingMinutes = lessonEnd - nowMinutes;
+                let remainingSecTotal = lessonEndSeconds - nowSeconds;
+                let remMin = Math.floor(remainingSecTotal / 60);
+                let remSec = remainingSecTotal % 60;
+
                 const remainingText = document.createElement('span');
                 remainingText.className = 'time-remaining';
                 remainingText.style.marginLeft = '10px';
+                remainingText.style.padding = '2px 6px';
+                remainingText.style.borderRadius = '6px';
+                remainingText.style.backgroundColor = '#ff9800'; // kirkas oranssi
+                remainingText.style.color = '#fff';
                 remainingText.style.fontWeight = 'bold';
-                remainingText.style.color = '#ff4444';
-                remainingText.textContent = `(Jäljellä ${remainingMinutes} min)`;
+                remainingText.textContent = `Jäljellä ${remMin} min ${remSec.toString().padStart(2, '0')} s`;
 
                 lesson.querySelector('.lesson-time').appendChild(remainingText);
             }
         });
     }
 }
+
 
 // Alustus
 updateClock();
