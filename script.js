@@ -1,5 +1,5 @@
 // Intro näkyy vain ensimmäisellä kerralla
-if(sessionStorage.getItem('introShown')) {
+if (sessionStorage.getItem('introShown')) {
     document.querySelector('.intro').style.display = 'none';
     document.querySelector('.container').style.opacity = '1';
 } else {
@@ -11,7 +11,8 @@ function updateClock() {
     const now = new Date();
     let h = now.getHours().toString().padStart(2, "0");
     let m = now.getMinutes().toString().padStart(2, "0");
-    document.getElementById("clock").textContent = `Kello ${h}:${m}`;
+    let s = now.getSeconds().toString().padStart(2, "0");
+    document.getElementById("clock").textContent = `Kello ${h}:${m}:${s}`;
 
     highlightCurrent();
 }
@@ -21,32 +22,31 @@ async function updateWeather() {
     const apiKey = 'd6149ddcc486b4c7e8b6cf842aa88d49'; // Korvaa oikealla API-avaimella
     const city = 'Rauma,FI';
     const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}&lang=fi`;
-    
+
     try {
         const response = await fetch(url);
         const data = await response.json();
-        
-        if(data.cod === 200) {
+
+        if (data.cod === 200) {
             const weatherWidget = document.querySelector('.weather-widget');
             const weatherIcon = weatherWidget.querySelector('.weather-icon');
             const weatherTemp = weatherWidget.querySelector('.weather-temp');
             const weatherDetails = weatherWidget.querySelector('.weather-details');
-            
+
             const temp = Math.round(data.main.temp);
             const description = data.weather[0].description;
             const iconCode = data.weather[0].icon;
-            
-            // Määritä Font Awesome -ikoni säätilan perusteella
+
             let iconClass;
-            if(iconCode.includes('01')) iconClass = 'fas fa-sun'; // Selkeä
-            else if(iconCode.includes('02')) iconClass = 'fas fa-cloud-sun'; // Puolipilv.
-            else if(iconCode.includes('03') || iconCode.includes('04')) iconClass = 'fas fa-cloud'; // Pilv.
-            else if(iconCode.includes('09') || iconCode.includes('10')) iconClass = 'fas fa-cloud-rain'; // Sade
-            else if(iconCode.includes('11')) iconClass = 'fas fa-bolt'; // Ukkonen
-            else if(iconCode.includes('13')) iconClass = 'fas fa-snowflake'; // Lumi
-            else if(iconCode.includes('50')) iconClass = 'fas fa-smog'; // Sumu
+            if (iconCode.includes('01')) iconClass = 'fas fa-sun';
+            else if (iconCode.includes('02')) iconClass = 'fas fa-cloud-sun';
+            else if (iconCode.includes('03') || iconCode.includes('04')) iconClass = 'fas fa-cloud';
+            else if (iconCode.includes('09') || iconCode.includes('10')) iconClass = 'fas fa-cloud-rain';
+            else if (iconCode.includes('11')) iconClass = 'fas fa-bolt';
+            else if (iconCode.includes('13')) iconClass = 'fas fa-snowflake';
+            else if (iconCode.includes('50')) iconClass = 'fas fa-smog';
             else iconClass = 'fas fa-cloud';
-            
+
             weatherIcon.className = `${iconClass} weather-icon`;
             weatherTemp.textContent = `${temp}°C`;
             weatherDetails.textContent = `${description.charAt(0).toUpperCase() + description.slice(1)}`;
@@ -59,10 +59,10 @@ async function updateWeather() {
     }
 }
 
-// Korostaa nykyisen päivän ja tunnin
+// Korostaa nykyisen päivän ja tunnin + näyttää jäljellä olevan ajan
 function highlightCurrent() {
     const now = new Date();
-    let day = now.getDay(); // Ma=1, Su=0
+    let day = now.getDay();
     let h = now.getHours();
     let m = now.getMinutes();
     let s = now.getSeconds();
@@ -71,14 +71,14 @@ function highlightCurrent() {
         card.classList.remove('highlight-day');
         card.querySelectorAll('.lesson').forEach(lesson => {
             lesson.classList.remove('highlight-lesson');
-            let remainingSpan = lesson.querySelector('.time-remaining');
-            if (remainingSpan) remainingSpan.remove(); // Poista vanha laskuri
+            // Poista kaikki vanhat jäljellä olevan ajan elementit
+            lesson.querySelectorAll('.time-remaining').forEach(el => el.remove());
         });
         card.querySelector('.meal').classList.remove('highlight-meal');
     });
 
     // Viikonloppuna ei korosteta mitään
-    if(day === 0 || day === 6) return;
+    if (day === 0 || day === 6) return;
 
     const todayCard = document.querySelector(`.day-card[data-day="${day}"]`);
     if (todayCard) {
@@ -88,7 +88,7 @@ function highlightCurrent() {
         todayCard.querySelectorAll('.lesson').forEach(lesson => {
             const [lh, lm] = lesson.dataset.time.split(':').map(Number);
             const lessonStart = lh * 60 + lm;
-            const lessonEnd = lessonStart + 75; // 85 min oppitunti
+            const lessonEnd = lessonStart + 85; // 85 min oppitunti
             const nowSeconds = h * 3600 + m * 60 + s;
             const lessonEndSeconds = lessonEnd * 60;
 
@@ -105,7 +105,7 @@ function highlightCurrent() {
                 remainingText.style.marginLeft = '10px';
                 remainingText.style.padding = '2px 6px';
                 remainingText.style.borderRadius = '6px';
-                remainingText.style.backgroundColor = '#ff9800'; // kirkas oranssi
+                remainingText.style.backgroundColor = '#ff9800';
                 remainingText.style.color = '#fff';
                 remainingText.style.fontWeight = 'bold';
                 remainingText.textContent = `Jäljellä ${remMin} min ${remSec.toString().padStart(2, '0')} s`;
@@ -116,19 +116,18 @@ function highlightCurrent() {
     }
 }
 
-
 // Alustus
 updateClock();
 updateWeather();
-setInterval(updateClock, 1000);
-setInterval(updateWeather, 3600000); // Päivitä sää tunnin välein
+setInterval(updateClock, 1000); // Päivitä kello ja jäljellä oleva aika joka sekunti
+setInterval(updateWeather, 3600000);
 
 // Lisää interaktiivisuutta
 document.querySelectorAll('.lesson').forEach(lesson => {
-    lesson.addEventListener('click', function() {
+    lesson.addEventListener('click', function () {
         alert(`Oppitunnin tiedot:\n${this.querySelector('.lesson-subject').textContent} (${this.querySelector('.lesson-code').textContent})\n` +
-              `Aika: ${this.querySelector('.lesson-time').textContent}\n` +
-              `Sali: ${this.querySelector('.lesson-room')?.textContent || 'Ei tietoa'}\n` +
-              `Opettaja: ${this.querySelector('.lesson-teacher')?.textContent || 'Ei tietoa'}`);
+            `Aika: ${this.querySelector('.lesson-time').textContent}\n` +
+            `Sali: ${this.querySelector('.lesson-room')?.textContent || 'Ei tietoa'}\n` +
+            `Opettaja: ${this.querySelector('.lesson-teacher')?.textContent || 'Ei tietoa'}`);
     });
 });
