@@ -18,7 +18,6 @@ function updateClock() {
 }
 
 // Elementit
-const settingsBtn = document.querySelector('.nav-item:nth-child(2)');
 const settingsModal = document.getElementById('settingsModal');
 const closeSettings = document.getElementById('closeSettings');
 
