@@ -8,6 +8,29 @@
     --warning: #f72585;
 }
 
+/* Korostusvärin käyttö painikkeissa */
+button, .btn {
+    background-color: var(--accent-color);
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+button:hover, .btn:hover {
+    background-color: color-mix(in srgb, var(--accent-color) 85%, black 15%);
+}
+
+/* Korostusväri tuntikorteissa */
+.class-card {
+    border: 2px solid var(--accent-color);
+    padding: 10px;
+    border-radius: 8px;
+}
+
+
 * {
     margin: 0;
     padding: 0;
