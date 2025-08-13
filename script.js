@@ -17,6 +17,75 @@ function updateClock() {
     highlightCurrent();
 }
 
+// Elementit
+const settingsBtn = document.querySelector('.nav-item:nth-child(2)');
+const settingsModal = document.getElementById('settingsModal');
+const closeSettings = document.getElementById('closeSettings');
+
+const themeSelect = document.getElementById('themeSelect');
+const fontSelect = document.getElementById('fontSelect');
+const accentColor = document.getElementById('accentColor');
+
+// Näytä asetukset
+settingsBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    settingsModal.style.display = 'flex';
+});
+
+// Sulje asetukset
+closeSettings.addEventListener('click', () => {
+    settingsModal.style.display = 'none';
+});
+
+window.addEventListener('click', (e) => {
+    if (e.target === settingsModal) {
+        settingsModal.style.display = 'none';
+    }
+});
+
+// Teeman vaihto
+themeSelect.addEventListener('change', () => {
+    if (themeSelect.value === 'dark') {
+        document.body.classList.add('dark-theme');
+    } else {
+        document.body.classList.remove('dark-theme');
+    }
+    localStorage.setItem('theme', themeSelect.value);
+});
+
+// Fontin vaihto
+fontSelect.addEventListener('change', () => {
+    document.body.style.fontFamily = fontSelect.value;
+    localStorage.setItem('font', fontSelect.value);
+});
+
+// Korostusväri
+accentColor.addEventListener('input', () => {
+    document.documentElement.style.setProperty('--accent-color', accentColor.value);
+    localStorage.setItem('accentColor', accentColor.value);
+});
+
+// Lataa tallennetut asetukset
+window.addEventListener('DOMContentLoaded', () => {
+    const savedTheme = localStorage.getItem('theme');
+    const savedFont = localStorage.getItem('font');
+    const savedAccent = localStorage.getItem('accentColor');
+
+    if (savedTheme) {
+        themeSelect.value = savedTheme;
+        if (savedTheme === 'dark') document.body.classList.add('dark-theme');
+    }
+    if (savedFont) {
+        fontSelect.value = savedFont;
+        document.body.style.fontFamily = savedFont;
+    }
+    if (savedAccent) {
+        accentColor.value = savedAccent;
+        document.documentElement.style.setProperty('--accent-color', savedAccent);
+    }
+});
+
+
 // Säädata Raumalle (OpenWeatherMap API)
 async function updateWeather() {
     const apiKey = 'd6149ddcc486b4c7e8b6cf842aa88d49'; // Korvaa oikealla API-avaimella
