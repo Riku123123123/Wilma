@@ -176,6 +176,21 @@ fontSelect.addEventListener('change', () => {
     localStorage.setItem('font', fontSelect.value);
 });
 
+const fontSizeInput = document.getElementById('fontSize');
+
+fontSizeInput.addEventListener('input', () => {
+    document.body.style.fontSize = fontSizeInput.value + 'px';
+    localStorage.setItem('fontSize', fontSizeInput.value);
+});
+
+// Ladataan tallennettu
+const savedFontSize = localStorage.getItem('fontSize');
+if (savedFontSize) {
+    fontSizeInput.value = savedFontSize;
+    document.body.style.fontSize = savedFontSize + 'px';
+}
+
+
 // Korostusväri
 accentColor.addEventListener('input', () => {
     document.documentElement.style.setProperty('--accent-color', accentColor.value);
