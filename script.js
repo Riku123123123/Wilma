@@ -27,10 +27,13 @@ const fontSelect = document.getElementById('fontSelect');
 const accentColor = document.getElementById('accentColor');
 
 // Näytä asetukset
+const settingsBtn = document.getElementById('settingsBtn');
+
 settingsBtn.addEventListener('click', (e) => {
     e.preventDefault();
     settingsModal.style.display = 'flex';
 });
+
 
 // Sulje asetukset
 closeSettings.addEventListener('click', () => {
