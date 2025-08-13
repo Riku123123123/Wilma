@@ -44,6 +44,37 @@
             </div>
         </header>
 
+                <!-- Asetukset-modal -->
+        <div id="settingsModal" class="settings-modal">
+            <div class="settings-content">
+                <span class="close-btn" id="closeSettings">&times;</span>
+                <h2>Asetukset</h2>
+        
+                <div class="setting-group">
+                    <label for="themeSelect">Teema:</label>
+                    <select id="themeSelect">
+                        <option value="light">Vaalea</option>
+                        <option value="dark">Tumma</option>
+                    </select>
+                </div>
+        
+                <div class="setting-group">
+                    <label for="fontSelect">Fontti:</label>
+                    <select id="fontSelect">
+                        <option value="Poppins">Poppins</option>
+                        <option value="Roboto">Roboto</option>
+                        <option value="Comic Sans MS">Comic Sans MS 😎</option>
+                    </select>
+                </div>
+        
+                <div class="setting-group">
+                    <label for="accentColor">Korostusväri:</label>
+                    <input type="color" id="accentColor" value="#007BFF">
+                </div>
+            </div>
+        </div>
+
+
         <div class="timetable" id="timetable">
             <!-- Lukujärjestys sisältö tulee tähän -->
             <div class="day-card" data-day="1">
