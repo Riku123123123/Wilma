@@ -191,11 +191,178 @@ if (savedFontSize) {
 }
 
 
-// Korostusväri
-accentColor.addEventListener('input', () => {
-    document.documentElement.style.setProperty('--accent-color', accentColor.value);
-    localStorage.setItem('accentColor', accentColor.value);
+// Aineiden värit
+const subjectColors = [
+    "math", "finnish", "english", "swedish", "languages",
+    "history", "physics", "sports", "economics", "event"
+];
+
+subjectColors.forEach(subject => {
+    const input = document.getElementById(`color-${subject}`);
+    if (input) {
+        // Lataa tallennettu väri jos löytyy
+        const saved = localStorage.getItem(`color-${subject}`);
+        if (saved) {
+            input.value = saved;
+            document.documentElement.style.setProperty(`--color-${subject}`, saved);
+        }
+
+        // Päivitä kun käyttäjä vaihtaa
+        input.addEventListener("input", () => {
+            document.documentElement.style.setProperty(`--color-${subject}`, input.value);
+            localStorage.setItem(`color-${subject}`, input.value);
+        });
+    }
 });
+
+// 🎨 Aineiden värien lista auki/kiinni
+const subjectColorsToggle = document.getElementById("subjectColorsToggle");
+const subjectColorsGroup = document.getElementById("subjectColorsGroup");
+const subjectColorsArrow = document.getElementById("subjectColorsArrow");
+
+subjectColorsToggle.addEventListener("click", () => {
+    if (subjectColorsGroup.style.display === "none") {
+        subjectColorsGroup.style.display = "block";
+        subjectColorsArrow.classList.remove("fa-chevron-down");
+        subjectColorsArrow.classList.add("fa-chevron-up");
+    } else {
+        subjectColorsGroup.style.display = "none";
+        subjectColorsArrow.classList.remove("fa-chevron-up");
+        subjectColorsArrow.classList.add("fa-chevron-down");
+    }
+});
+
+function openExternalGame(url) {
+    window.open(url, "_blank");
+}
+
+function openInternalGame(game) {
+    document.getElementById("rpsGame").style.display = "none";
+    if (game === "rps") {
+        document.getElementById("rpsGame").style.display = "block";
+    }
+}
+
+let rpsInterval;
+
+function startRPS(playerChoice) {
+    const popup = document.getElementById("rpsPopup");
+    const anim = document.getElementById("rpsAnimation");
+    const resultBox = document.getElementById("rpsResult");
+
+    const symbols = ["🪨", "📄", "✂️"];
+    const names = ["kivi", "paperi", "sakset"];
+
+    popup.style.display = "flex"; // näytä popup
+    resultBox.textContent = "Arvotaan...";
+    let i = 0;
+
+    // Käynnistetään pyöritys
+    clearInterval(rpsInterval);
+    rpsInterval = setInterval(() => {
+        anim.textContent = symbols[i];
+        i = (i + 1) % symbols.length;
+    }, 120);
+
+    // Arvotaan tietokoneen lopullinen valinta
+    const computerChoice = names[Math.floor(Math.random() * 3)];
+
+    // Lopetetaan pyöritys 2 sekunnin päästä
+    setTimeout(() => {
+        clearInterval(rpsInterval);
+        anim.textContent = symbols[names.indexOf(computerChoice)];
+
+        // Tuloksen laskenta
+        let result = "";
+        if (playerChoice === computerChoice) {
+            result = `Tasapeli! Molemmat valitsivat ${playerChoice}.`;
+        } else if (
+            (playerChoice === "kivi" && computerChoice === "sakset") ||
+            (playerChoice === "paperi" && computerChoice === "kivi") ||
+            (playerChoice === "sakset" && computerChoice === "paperi")
+        ) {
+            result = `🎉 Voitit! ${playerChoice} voittaa ${computerChoice}.`;
+        } else {
+            result = `❌ Hävisit! ${computerChoice} voittaa ${playerChoice}.`;
+        }
+
+        resultBox.textContent = result;
+
+        // ✅ Suljetaan popup automaattisesti 1.5 sek kuluttua
+        setTimeout(() => {
+            popup.style.display = "none";
+        }, 1500);
+
+    }, 2000);
+}
+
+function closeRpsPopup() {
+    document.getElementById("rpsPopup").style.display = "none";
+}
+
+// Tallennetaan ruokalista localStorageen
+document.getElementById("saveMeals").addEventListener("click", () => {
+    const meals = {
+        mon: document.getElementById("meal-mon").value,
+        tue: document.getElementById("meal-tue").value,
+        wed: document.getElementById("meal-wed").value,
+        thu: document.getElementById("meal-thu").value,
+        fri: document.getElementById("meal-fri").value,
+    };
+    localStorage.setItem("meals", JSON.stringify(meals));
+    alert("Ruokalista tallennettu!");
+    updateMeals();
+});
+
+// Päivitetään näkyviin ruokalista
+function updateMeals() {
+    const savedMeals = JSON.parse(localStorage.getItem("meals"));
+    if (!savedMeals) return;
+
+    const days = ["mon", "tue", "wed", "thu", "fri"];
+    const dayCards = document.querySelectorAll(".day-card");
+
+    dayCards.forEach((card, index) => {
+        const mealEl = card.querySelector(".meal span");
+        if (mealEl && savedMeals[days[index]]) {
+            mealEl.textContent = savedMeals[days[index]];
+        }
+    });
+
+    // Esitäytetään asetuksissa kentät tallennetuilla arvoilla
+    if (document.getElementById("meal-mon")) {
+        document.getElementById("meal-mon").value = savedMeals.mon || "";
+        document.getElementById("meal-tue").value = savedMeals.tue || "";
+        document.getElementById("meal-wed").value = savedMeals.wed || "";
+        document.getElementById("meal-thu").value = savedMeals.thu || "";
+        document.getElementById("meal-fri").value = savedMeals.fri || "";
+    }
+}
+
+// Käynnistyksessä päivitä
+window.addEventListener("DOMContentLoaded", () => {
+    updateMeals();
+});
+
+// 🍽 Ruokalista toggle
+const mealsToggle = document.getElementById("mealsToggle");
+const mealsGroup = document.getElementById("mealsGroup");
+const mealsArrow = document.getElementById("mealsArrow");
+
+mealsToggle.addEventListener("click", () => {
+    if (mealsGroup.style.display === "none") {
+        mealsGroup.style.display = "block";
+        mealsArrow.classList.remove("fa-chevron-down");
+        mealsArrow.classList.add("fa-chevron-up");
+    } else {
+        mealsGroup.style.display = "none";
+        mealsArrow.classList.remove("fa-chevron-up");
+        mealsArrow.classList.add("fa-chevron-down");
+    }
+});
+
+
+
 
 // Lataa tallennetut asetukset
 window.addEventListener('DOMContentLoaded', () => {

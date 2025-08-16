@@ -18,7 +18,7 @@
             <circle cx="12" cy="10" r="2"></circle>
             <path d="M12 12v3"></path>
         </svg>
-        <h1 class="intro-title">Rauman Lyseon Lukio</h1>
+        <h1 class="intro-title">Rauman lukio</h1>
         <p class="intro-subtitle">1. periodin lukujärjestys</p>
         <div class="loading-bar">
             <div class="loading-progress"></div>
@@ -30,7 +30,7 @@
         <header>
             <div class="header-left">
                 <h1>Lukujärjestys</h1>
-                <p>11.08.2025 - 15.08.2025 • 1. periodi</p>
+                <p>18.08.2025 - 22.08.2025 • 1. periodi</p>
             </div>
             <div class="header-right">
                 <div class="weather-widget">
@@ -44,7 +44,7 @@
             </div>
         </header>
 
-                <!-- Asetukset-modal -->
+         <!-- Asetukset-modal -->
         <div id="settingsModal" class="settings-modal">
             <div class="settings-content">
                 <span class="close-btn" id="closeSettings">&times;</span>
@@ -69,15 +69,38 @@
                         <input type="range" id="fontSize" min="12" max="24" value="16">
                 </div>
 
-                
-        
-                <div class="setting-group">
-                    <label for="accentColor">Korostusväri:</label>
-                    <input type="color" id="accentColor" value="#007BFF">
+                 <!-- 🎨 Aineiden värit -->
+                <!-- 🎨 Aineiden värit -->
+                <h3 id="subjectColorsToggle" style="cursor:pointer;">
+                    <i class="fas fa-palette"></i> Aineiden värit
+                    <i class="fas fa-chevron-down" id="subjectColorsArrow"></i>
+                </h3>
+                <div class="setting-group" id="subjectColorsGroup" style="display:none; margin-top:10px;">
+                    <label>Matematiikka: <input type="color" id="color-math" value="#007bff"></label>
+                     <label>Äidinkieli: <input type="color" id="color-finnish" value="#ff4081"></label>
+                    <label>Englanti: <input type="color" id="color-english" value="#00c853"></label>
+                    <label>Historia: <input type="color" id="color-history" value="#ffc107"></label>
+                    <label>Fysiikka: <input type="color" id="color-physics" value="#9c27b0"></label>
+                    <label>Liikunta: <input type="color" id="color-sports" value="#ff5722"></label>
+                    <label>Talous: <input type="color" id="color-economics" value="#2196f3"></label>
+                    <label>Tapahtumat: <input type="color" id="color-event" value="#26c6da"></label>
+                </div>
+
+                <!-- 🍽 Ruokalista -->
+                <h3 id="mealsToggle" style="cursor:pointer; margin-top:1rem;">
+                    <i class="fas fa-utensils"></i> Ruokalista
+                    <i class="fas fa-chevron-down" id="mealsArrow"></i>
+                </h3>
+                <div class="setting-group" id="mealsGroup" style="display:none; margin-top:10px;">
+                    <label>Maanantai: <input type="text" id="meal-mon"></label>
+                    <label>Tiistai: <input type="text" id="meal-tue"></label>
+                    <label>Keskiviikko: <input type="text" id="meal-wed"></label>
+                    <label>Torstai: <input type="text" id="meal-thu"></label>
+                    <label>Perjantai: <input type="text" id="meal-fri"></label>
+                    <button id="saveMeals">Tallenna</button>
                 </div>
             </div>
         </div>
-
 
         <div class="timetable" id="timetable">
             <!-- Lukujärjestys sisältö tulee tähän -->
@@ -95,7 +118,7 @@
                             <span class="lesson-teacher"><i class="fas fa-chalkboard-teacher"></i> IK</span>
                         </div>
                     </div>
-                    <div class="lesson language" data-time="09:40">
+                    <div class="lesson english" data-time="09:40">
                         <span class="lesson-time">09:40 - 10:55</span>
                         <div class="lesson-main">
                             <span class="lesson-subject">Kestävä tulevaisuus ja tiede</span>
@@ -106,7 +129,7 @@
                             <span class="lesson-teacher"><i class="fas fa-chalkboard-teacher"></i> JPI</span>
                         </div>
                     </div>
-                    <div class="lesson language" data-time="12:05">
+                    <div class="lesson finnish" data-time="12:05">
                         <span class="lesson-time">12:05 - 13:20</span>
                         <div class="lesson-main">
                             <span class="lesson-subject">Tekstien tulkinta 1</span>
@@ -131,7 +154,7 @@
                 </div>
                 <div class="meal">
                     <i class="fas fa-utensils"></i>
-                    <span>Kalakepukka</span>
+                    <span>Pinaattiohukaiset</span>
                 </div>
             </div>
             
@@ -150,6 +173,19 @@
                             <span class="lesson-teacher"><i class="fas fa-chalkboard-teacher"></i> KH</span>
                         </div>
                     </div>
+
+                    <!-- ✨ Uusi tapahtuma: koulukuvaus -->
+                    <div class="lesson event" data-time="09:20">
+                        <span class="lesson-time">09:20 - 09:40</span>
+                        <div class="lesson-main">
+                            <span class="lesson-subject"><i class="fas fa-camera"></i> Koulukuvaus</span>
+                        </div>
+                        <div class="lesson-info">
+                            <span class="lesson-room"><i class="fas fa-door-open"></i>B221</span>
+                        </div>
+                    </div>
+                    <!-- ✨ -->
+                    
                     <div class="lesson history" data-time="09:40">
                         <span class="lesson-time">09:40 - 10:55</span>
                         <div class="lesson-main">
@@ -186,7 +222,7 @@
                 </div>
                 <div class="meal">
                     <i class="fas fa-utensils"></i>
-                    <span>Possua BBQ</span>
+                    <span>Broilerilasagnette</span>
                 </div>
             </div>
             
@@ -227,7 +263,7 @@
                             <span class="lesson-teacher"><i class="fas fa-chalkboard-teacher"></i> MHEL</span>
                         </div>
                     </div>
-                    <div class="lesson language" data-time="13:35">
+                    <div class="lesson english" data-time="13:35">
                         <span class="lesson-time">13:35 - 14:50</span>
                         <div class="lesson-main">
                             <span class="lesson-subject">Kestävä tulevaisuus ja tiede</span>
@@ -241,7 +277,7 @@
                 </div>
                 <div class="meal">
                     <i class="fas fa-utensils"></i>
-                    <span>Sitruskana­kastike</span>
+                    <span>Nakkikastike</span>
                 </div>
             </div>
             
@@ -281,7 +317,7 @@
                             <span class="lesson-teacher"><i class="fas fa-chalkboard-teacher"></i> PA</span>
                         </div>
                     </div>
-                    <div class="lesson language" data-time="13:35">
+                    <div class="lesson finnish" data-time="13:35">
                         <span class="lesson-time">13:35 - 14:50</span>
                         <div class="lesson-main">
                             <span class="lesson-subject">Tekstien tulkinta 1</span>
@@ -295,7 +331,7 @@
                 </div>
                 <div class="meal">
                     <i class="fas fa-utensils"></i>
-                    <span>Palvikiusaus</span>
+                    <span>Hernekeitto</span>
                 </div>
             </div>
             
@@ -314,7 +350,7 @@
                             <span class="lesson-teacher"><i class="fas fa-chalkboard-teacher"></i> MHEL</span>
                         </div>
                     </div>
-                    <div class="lesson language" data-time="09:40">
+                    <div class="lesson english" data-time="09:40">
                         <span class="lesson-time">09:40 - 10:55</span>
                         <div class="lesson-main">
                             <span class="lesson-subject">Kestävä tulevaisuus ja tiede</span>
@@ -349,14 +385,62 @@
                 </div>
                 <div class="meal">
                     <i class="fas fa-utensils"></i>
-                    <span>Luomu ohrahiutalepuuro</span>
+                    <span>Sitruunainen kalaleike</span>
                 </div>
+            </div>
+
+        <div class="minigame">
+            <h3>🎮 pelit</h3>
+            <div class="game-grid">
+                <div class="game-card" onclick="openInternalGame('rps')">
+                    <span class="icon">✂️</span>
+                    <p>Kivi-paperi-sakset</p>
+                </div>
+                <div class="game-card" onclick="openExternalGame('https://play2048.co/')">
+                    <span class="icon">🔢</span>
+                    <p>2048</p>
+                </div>
+                <div class="game-card" onclick="openExternalGame('https://sanuli.fi/')">
+                    <span class="icon">🔤</span>
+                    <p>Sanuli</p>
+                </div>
+                <div class="game-card" onclick="openExternalGame('https://playsnake.org/')">
+                    <span class="icon">🐍</span>
+                    <p>Snake</p>
+                </div>
+                <div class="game-card" onclick="openExternalGame('https://tetris.com/play-tetris')">
+                    <span class="icon">🟦</span>
+                    <p>Tetris</p>
+                </div>
+                <div class="game-card" onclick="openExternalGame('https://www.ponggame.org/')">
+                    <span class="icon">🏓</span>
+                    <p>Pong</p>
+                </div>
+            </div>
+
+        <div id="rpsGame" style="display:none; margin-top:1rem;">
+            <h4>Kivi-paperi-sakset</h4>
+            <div class="choices">
+                <button onclick="startRPS('kivi')">🪨</button>
+                <button onclick="startRPS('paperi')">📄</button>
+                <button onclick="startRPS('sakset')">✂️</button>
+            </div>
+            
+        <!-- KPS Popup-arvonta -->
+            <div id="rpsPopup" class="rps-popup">
+            <div class="rps-popup-content">
+                <div id="rpsAnimation">❔</div>
+                <p id="rpsResult">Valitse ja pelaa!</p>
+                <button onclick="closeRpsPopup()">Sulje</button>
             </div>
         </div>
     </div>
+</div>
+
+
 
     <!-- Bottom navigaatio -->
-    <nav class="bottom-nav">
+     <nav class="bottom-nav">
         <div class="nav-items">
             <a href="#" class="nav-item active">
                 <i class="fas fa-calendar-alt"></i>
