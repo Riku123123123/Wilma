@@ -13,19 +13,18 @@ function updateClock() {
     let m = now.getMinutes().toString().padStart(2, "0");
     let s = now.getSeconds().toString().padStart(2, "0");
     document.getElementById("clock").textContent = `Kello ${h}:${m}:${s}`;
-
     highlightCurrent();
 }
 
-// Säädata Raumalle (OpenWeatherMap API)
+// Säätiedot Raumalle
 async function updateWeather() {
-    const apiKey = 'd6149ddcc486b4c7e8b6cf842aa88d49'; // Korvaa oikealla API-avaimella
+    const apiKey = 'd6149ddcc486b4c7e8b6cf842aa88d49'; // korvaa oikealla
     const city = 'Rauma,FI';
     const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}&lang=fi`;
 
     try {
-        const response = await fetch(url);
-        const data = await response.json();
+        const res = await fetch(url);
+        const data = await res.json();
 
         if (data.cod === 200) {
             const weatherWidget = document.querySelector('.weather-widget');
@@ -34,7 +33,7 @@ async function updateWeather() {
             const weatherDetails = weatherWidget.querySelector('.weather-details');
 
             const temp = Math.round(data.main.temp);
-            const description = data.weather[0].description;
+            const desc = data.weather[0].description;
             const iconCode = data.weather[0].icon;
 
             let iconClass;
@@ -49,17 +48,17 @@ async function updateWeather() {
 
             weatherIcon.className = `${iconClass} weather-icon`;
             weatherTemp.textContent = `${temp}°C`;
-            weatherDetails.textContent = `${description.charAt(0).toUpperCase() + description.slice(1)}`;
+            weatherDetails.textContent = `${desc.charAt(0).toUpperCase() + desc.slice(1)}`;
         } else {
             throw new Error('Säätietoja ei saatavilla');
         }
-    } catch (error) {
-        console.error('Virhe säätietojen haussa:', error);
+    } catch (err) {
+        console.error('Virhe säätietojen haussa:', err);
         document.querySelector('.weather-temp').textContent = 'Ei yhteyttä';
     }
 }
 
-// Korostaa nykyisen päivän ja tunnin + näyttää jäljellä olevan ajan
+// Korostaa nykyisen tunnin ja näyttää jäljellä olevan ajan
 function highlightCurrent() {
     const now = new Date();
     let day = now.getDay();
@@ -71,58 +70,56 @@ function highlightCurrent() {
         card.classList.remove('highlight-day');
         card.querySelectorAll('.lesson').forEach(lesson => {
             lesson.classList.remove('highlight-lesson');
-            // Poista kaikki vanhat jäljellä olevan ajan elementit
             lesson.querySelectorAll('.time-remaining').forEach(el => el.remove());
         });
         card.querySelector('.meal').classList.remove('highlight-meal');
     });
 
-    // Viikonloppuna ei korosteta mitään
+    // viikonloppu -> ei mitään
     if (day === 0 || day === 6) return;
 
     const todayCard = document.querySelector(`.day-card[data-day="${day}"]`);
-    if (todayCard) {
-        todayCard.classList.add('highlight-day');
-        todayCard.querySelector('.meal').classList.add('highlight-meal');
+    if (!todayCard) return;
 
-        todayCard.querySelectorAll('.lesson').forEach(lesson => {
-            const [lh, lm] = lesson.dataset.time.split(':').map(Number);
-            const lessonStart = lh * 60 + lm;
-            const lessonEnd = lessonStart + 75;
-            const nowSeconds = h * 3600 + m * 60 + s;
-            const lessonEndSeconds = lessonEnd * 60;
+    todayCard.classList.add('highlight-day');
+    todayCard.querySelector('.meal').classList.add('highlight-meal');
 
-            if (nowSeconds >= lessonStart * 60 && nowSeconds < lessonEndSeconds) {
-                lesson.classList.add('highlight-lesson');
+    todayCard.querySelectorAll('.lesson').forEach(lesson => {
+        const [lh, lm] = lesson.dataset.time.split(':').map(Number);
+        const duration = parseInt(lesson.dataset.duration) || 75; // oletus 75 min
+        const lessonStart = lh * 60 + lm;
+        const lessonEnd = lessonStart + duration;
+        const nowSeconds = h * 3600 + m * 60 + s;
 
-                // Lasketaan jäljellä oleva aika
-                let remainingSecTotal = lessonEndSeconds - nowSeconds;
-                let remMin = Math.floor(remainingSecTotal / 60);
-                let remSec = remainingSecTotal % 60;
+        if (nowSeconds >= lessonStart * 60 && nowSeconds < lessonEnd * 60) {
+            lesson.classList.add('highlight-lesson');
 
-                const remainingText = document.createElement('span');
-                remainingText.className = 'time-remaining';
-                remainingText.style.marginLeft = '10px';
-                remainingText.style.padding = '2px 6px';
-                remainingText.style.borderRadius = '6px';
-                remainingText.style.backgroundColor = '#ff9800';
-                remainingText.style.color = '#fff';
-                remainingText.style.fontWeight = 'bold';
-                remainingText.textContent = `Jäljellä ${remMin} min ${remSec.toString().padStart(2, '0')} s`;
+            let remainingSec = lessonEnd * 60 - nowSeconds;
+            let remMin = Math.floor(remainingSec / 60);
+            let remSec = remainingSec % 60;
 
-                lesson.querySelector('.lesson-time').appendChild(remainingText);
-            }
-        });
-    }
+            const remainingText = document.createElement('span');
+            remainingText.className = 'time-remaining';
+            remainingText.style.marginLeft = '10px';
+            remainingText.style.padding = '2px 6px';
+            remainingText.style.borderRadius = '6px';
+            remainingText.style.backgroundColor = '#ff9800';
+            remainingText.style.color = '#fff';
+            remainingText.style.fontWeight = 'bold';
+            remainingText.textContent = `Jäljellä ${remMin} min ${remSec.toString().padStart(2, '0')} s`;
+
+            lesson.querySelector('.lesson-time').appendChild(remainingText);
+        }
+    });
 }
 
 // Alustus
 updateClock();
 updateWeather();
-setInterval(updateClock, 1000); // Päivitä kello ja jäljellä oleva aika joka sekunti
+setInterval(updateClock, 1000);
 setInterval(updateWeather, 3600000);
 
-// Lisää interaktiivisuutta
+// Interaktiivisuus
 document.querySelectorAll('.lesson').forEach(lesson => {
     lesson.addEventListener('click', function () {
         alert(`Oppitunnin tiedot:\n${this.querySelector('.lesson-subject').textContent} (${this.querySelector('.lesson-code').textContent})\n` +
@@ -383,3 +380,4 @@ window.addEventListener('DOMContentLoaded', () => {
         document.documentElement.style.setProperty('--accent-color', savedAccent);
     }
 });
+
