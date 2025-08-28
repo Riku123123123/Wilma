@@ -49,6 +49,9 @@
             <div class="settings-content">
                 <span class="close-btn" id="closeSettings">&times;</span>
                 <h2>Asetukset</h2>
+
+                <button onclick="showNormal()">Näytä normaali viikko</button>
+<button onclick="showProject()">Näytä projektiviikko</button>
         
                 <div class="setting-group">
                     <label for="themeSelect">Teema:</label>
@@ -374,6 +377,259 @@
                 <div class="meal">
                     <i class="fas fa-utensils"></i>
                     <span>Sitruunainen kalaleike</span>
+                </div>
+            </div>
+
+            <!-- Projektiviikko • Perjantai -->
+<div class="day-card project-week" data-day="proj-fri">
+  <h2><i class="fas fa-project-diagram"></i> Projektiviikko • Perjantai</h2>
+  <div class="lessons-container">
+    <div class="lesson sports" data-time="08:10" data-duration="165">
+      <span class="lesson-time">08:10 - 10:55</span>
+      <div class="lesson-main">
+        <span class="lesson-subject">Aktiivinen elämä</span>
+        <span class="lesson-code">LI02.2</span>
+      </div>
+      <div class="lesson-info">
+        <span class="lesson-teacher"><i class="fas fa-chalkboard-teacher"></i> KH</span>
+      </div>
+    </div>
+
+    <div class="lesson economics" data-time="12:05" data-duration="165">
+      <span class="lesson-time">12:05 - 14:50</span>
+      <div class="lesson-main">
+        <span class="lesson-subject">Taloustieto</span>
+        <span class="lesson-code">YH02.1</span>
+      </div>
+      <div class="lesson-info">
+        <span class="lesson-room"><i class="fas fa-door-open"></i> A209</span>
+        <span class="lesson-teacher"><i class="fas fa-chalkboard-teacher"></i> PA</span>
+      </div>
+    </div>
+    <div class="meal">
+        <i class="fas fa-utensils"></i>
+        <span>Perinteinen jauhelihakeitto</span>
+    </div>
+  </div>
+</div>
+
+            <div class="day-card project-week" data-day="proj-mon">
+  <h2><i class="fas fa-project-diagram"></i> Projektiviikko • Maanantai</h2>
+  <div class="lessons-container">
+    <div class="lesson math" data-time="08:10" data-duration="165">
+      <span class="lesson-time">08:10 - 10:55</span>
+      <div class="lesson-main">
+        <span class="lesson-subject">Funktiot ja yhtälöt 2</span>
+        <span class="lesson-code">MAA05.4</span>
+      </div>
+      <div class="lesson-info">
+        <span class="lesson-room"><i class="fas fa-door-open"></i> A021</span>
+        <span class="lesson-teacher"><i class="fas fa-chalkboard-teacher"></i> MHEL</span>
+      </div>
+    </div>
+
+    <div class="lesson physics" data-time="12:05" data-duration="165">
+      <span class="lesson-time">12:05 - 14:50</span>
+      <div class="lesson-main">
+        <span class="lesson-subject">Voima ja liike</span>
+        <span class="lesson-code">FY04.1</span>
+      </div>
+      <div class="lesson-info">
+        <span class="lesson-room"><i class="fas fa-door-open"></i> B046</span>
+        <span class="lesson-teacher"><i class="fas fa-chalkboard-teacher"></i> MHEL</span>
+      </div>
+    </div>
+    <div class="meal">
+        <i class="fas fa-utensils"></i>
+        <span>Kirjolohikiusaus</span>
+    </div>
+  </div>
+</div>
+
+<!-- Projektiviikko • Tiistai -->
+<div class="day-card project-week" data-day="proj-tue">
+  <h2><i class="fas fa-project-diagram"></i> Projektiviikko • Tiistai</h2>
+  <div class="lessons-container">
+    <div class="lesson history" data-time="08:10" data-duration="165">
+      <span class="lesson-time">08:10 - 10:55</span>
+      <div class="lesson-main">
+        <span class="lesson-subject">Kansainväliset suhteet</span>
+        <span class="lesson-code">HI02.2</span>
+      </div>
+      <div class="lesson-info">
+        <span class="lesson-room"><i class="fas fa-door-open"></i> A211</span>
+        <span class="lesson-teacher"><i class="fas fa-chalkboard-teacher"></i> IK</span>
+      </div>
+    </div>
+
+    <div class="lesson english" data-time="12:05" data-duration="165">
+      <span class="lesson-time">12:05 - 14:50</span>
+      <div class="lesson-main">
+        <span class="lesson-subject">Kestävä tulevaisuus ja tiede</span>
+        <span class="lesson-code">ENA05.1</span>
+      </div>
+      <div class="lesson-info">
+        <span class="lesson-room"><i class="fas fa-door-open"></i> A312</span>
+        <span class="lesson-teacher"><i class="fas fa-chalkboard-teacher"></i> JPI</span>
+      </div>
+    </div>
+    <div class="meal">
+        <i class="fas fa-utensils"></i>
+        <span>Mexican kasvipihvit</span>
+    </div>
+  </div>
+</div>
+
+<!-- Projektiviikko • Keskiviikko -->
+<div class="day-card project-week" data-day="proj-wed">
+  <h2><i class="fas fa-project-diagram"></i> Projektiviikko • Keskiviikko</h2>
+  <div class="lessons-container">
+    <div class="lesson finnish" data-time="08:10" data-duration="165">
+      <span class="lesson-time">08:10 - 10:55</span>
+      <div class="lesson-main">
+        <span class="lesson-subject">Tekstien tulkinta 1</span>
+        <span class="lesson-code">ÄI05.6</span>
+      </div>
+      <div class="lesson-info">
+        <span class="lesson-room"><i class="fas fa-door-open"></i> A311</span>
+        <span class="lesson-teacher"><i class="fas fa-chalkboard-teacher"></i> LH</span>
+      </div>
+    </div>
+
+    <div class="lesson physics" data-time="12:05" data-duration="75">
+                        <span class="lesson-time">12:05 - 13:20</span>
+                        <div class="lesson-main">
+                            <span class="lesson-subject">Voima ja liike</span>
+                            <span class="lesson-code">FY04.1</span>
+                        </div>
+                        <div class="lesson-info">
+                            <span class="lesson-room"><i class="fas fa-door-open"></i> B046</span>
+                            <span class="lesson-teacher"><i class="fas fa-chalkboard-teacher"></i> MHEL</span>
+                        </div>
+                    </div>
+                    <div class="lesson english" data-time="13:35" data-duration="75">
+                        <span class="lesson-time">13:35 - 14:50</span>
+                        <div class="lesson-main">
+                            <span class="lesson-subject">Kestävä tulevaisuus ja tiede</span>
+                            <span class="lesson-code">ENA05.1</span>
+                        </div>
+                        <div class="lesson-info">
+                            <span class="lesson-room"><i class="fas fa-door-open"></i> A312</span>
+                            <span class="lesson-teacher"><i class="fas fa-chalkboard-teacher"></i> JPI</span>
+                        </div>
+                    </div>
+                </div>
+            <div class="meal">
+        <i class="fas fa-utensils"></i>
+        <span>Palermon pasta</span>
+    </div>
+  </div>
+</div>
+
+<!-- Torstai -->
+            <div class="day-card project-week" data-day="proj-thu">
+                <h2><i class="fas fa-calendar-day"></i> Torstai</h2>
+                <div class="lessons-container">
+                    <div class="lesson sports" data-time="08:10" data-duration="75">
+                        <span class="lesson-time">08:10 - 09:25</span>
+                        <div class="lesson-main">
+                            <span class="lesson-subject">Aktiivinen elämä</span>
+                            <span class="lesson-code">LI02.2</span>
+                        </div>
+                        <div class="lesson-info">
+                            <span class="lesson-teacher"><i class="fas fa-chalkboard-teacher"></i> KH</span>
+                        </div>
+                    </div>
+                    <div class="lesson history" data-time="09:40" data-duration="75">
+                        <span class="lesson-time">09:40 - 10:55</span>
+                        <div class="lesson-main">
+                            <span class="lesson-subject">Kansainväliset suhteet</span>
+                            <span class="lesson-code">HI02.2</span>
+                        </div>
+                        <div class="lesson-info">
+                            <span class="lesson-room"><i class="fas fa-door-open"></i> A211</span>
+                            <span class="lesson-teacher"><i class="fas fa-chalkboard-teacher"></i> IK</span>
+                        </div>
+                    </div>
+                    <div class="lesson economics" data-time="12:05" data-duration="75">
+                        <span class="lesson-time">12:05 - 13:20</span>
+                        <div class="lesson-main">
+                            <span class="lesson-subject">Taloustieto</span>
+                            <span class="lesson-code">YH02.1</span>
+                        </div>
+                        <div class="lesson-info">
+                            <span class="lesson-room"><i class="fas fa-door-open"></i> A209</span>
+                            <span class="lesson-teacher"><i class="fas fa-chalkboard-teacher"></i> PA</span>
+                        </div>
+                    </div>
+                    <div class="lesson finnish" data-time="13:35" data-duration="75">
+                        <span class="lesson-time">13:35 - 14:50</span>
+                        <div class="lesson-main">
+                            <span class="lesson-subject">Tekstien tulkinta 1</span>
+                            <span class="lesson-code">ÄI05.6</span>
+                        </div>
+                        <div class="lesson-info">
+                            <span class="lesson-room"><i class="fas fa-door-open"></i> A311</span>
+                            <span class="lesson-teacher"><i class="fas fa-chalkboard-teacher"></i> LH</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="meal">
+                    <i class="fas fa-utensils"></i>
+                    <span>Makkarakeitto</span>
+                </div>
+                </div>
+
+<div class="day-card project-week" data-day="proj-fri">
+                <h2><i class="fas fa-calendar-day"></i> Perjantai</h2>
+                <div class="lessons-container">
+                    <div class="lesson math" data-time="08:10" data-duration="75">
+                        <span class="lesson-time">08:10 - 09:25</span>
+                        <div class="lesson-main">
+                            <span class="lesson-subject">Funktiot ja yhtälöt 2</span>
+                            <span class="lesson-code">MAA05.4</span>
+                        </div>
+                        <div class="lesson-info">
+                            <span class="lesson-room"><i class="fas fa-door-open"></i> A021</span>
+                            <span class="lesson-teacher"><i class="fas fa-chalkboard-teacher"></i> MHEL</span>
+                        </div>
+                    </div>
+                    <div class="lesson english" data-time="09:40" data-duration="75">
+                        <span class="lesson-time">09:40 - 10:55</span>
+                        <div class="lesson-main">
+                            <span class="lesson-subject">Kestävä tulevaisuus ja tiede</span>
+                            <span class="lesson-code">ENA05.1</span>
+                        </div>
+                        <div class="lesson-info">
+                            <span class="lesson-room"><i class="fas fa-door-open"></i> A312</span>
+                            <span class="lesson-teacher"><i class="fas fa-chalkboard-teacher"></i> JPI</span>
+                        </div>
+                    </div>
+                    <div class="lesson sports" data-time="12:05" data-duration="75">
+                        <span class="lesson-time">12:05 - 13:20</span>
+                        <div class="lesson-main">
+                            <span class="lesson-subject">Aktiivinen elämä</span>
+                            <span class="lesson-code">LI02.2</span>
+                        </div>
+                        <div class="lesson-info">
+                            <span class="lesson-teacher"><i class="fas fa-chalkboard-teacher"></i> KH</span>
+                        </div>
+                    </div>
+                    <div class="lesson physics" data-time="13:35" data-duration="75">
+                        <span class="lesson-time">13:35 - 14:50</span>
+                        <div class="lesson-main">
+                            <span class="lesson-subject">Voima ja liike</span>
+                            <span class="lesson-code">FY04.1</span>
+                        </div>
+                        <div class="lesson-info">
+                            <span class="lesson-room"><i class="fas fa-door-open"></i> B046</span>
+                            <span class="lesson-teacher"><i class="fas fa-chalkboard-teacher"></i> MHEL</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="meal">
+                    <i class="fas fa-utensils"></i>
+                    <span>Tortilla, Broileri-paputäyte</span>
                 </div>
             </div>
 
