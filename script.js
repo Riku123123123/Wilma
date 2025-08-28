@@ -341,6 +341,26 @@ window.addEventListener("DOMContentLoaded", () => {
     updateMeals();
 });
 
+function showNormal() {
+    document.querySelectorAll('.day-card').forEach(card => {
+        if (card.classList.contains('project-week')) {
+            card.style.display = 'none';
+        } else {
+            card.style.display = 'block';
+        }
+    });
+}
+
+function showProject() {
+    document.querySelectorAll('.day-card').forEach(card => {
+        if (card.classList.contains('project-week')) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
 // 🍽 Ruokalista toggle
 const mealsToggle = document.getElementById("mealsToggle");
 const mealsGroup = document.getElementById("mealsGroup");
@@ -380,4 +400,4 @@ window.addEventListener('DOMContentLoaded', () => {
         document.documentElement.style.setProperty('--accent-color', savedAccent);
     }
 });
-
+s
