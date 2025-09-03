@@ -40,10 +40,6 @@ button:hover, .btn:hover {
     border-radius: 8px;
 }
 
-.day-card:not(.project-week) {
-    display: none;
-}
-
 
 
 * {
@@ -618,3 +614,4 @@ body.dark-theme .settings-content {
         gap: 1rem;
     }
 }
+
