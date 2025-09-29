@@ -1,0 +1,618 @@
+:root {
+    --primary: #4361ee;
+    --secondary: #3f37c9;
+    --accent-color: #4895ef;
+    --light: #f8f9fa;
+    --dark: #212529;
+    --success: #4cc9f0;
+    --warning: #f72585;
+    --color-math: #007bff;
+    --color-finnish: #ff4081;
+    --color-english: #00c853;
+    --color-swedish: #ffc107;
+    --color-history: #ffc107;
+    --color-physics: #9c27b0;
+    --color-sports: #ff5722;
+    --color-economics: #2196f3;
+    --color-event: #26c6da;
+    --lesson-opacity: 50%;
+}
+
+/* Korostusvärin käyttö painikkeissa */
+button, .btn {
+    background-color: var(--accent-color);
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+button:hover, .btn:hover {
+    background-color: color-mix(in srgb, var(--accent-color) 85%, black 15%);
+}
+
+/* Korostusväri tuntikorteissa */
+.class-card {
+    border: 2px solid var(--accent-color);
+    padding: 10px;
+    border-radius: 8px;
+}
+
+
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: var(--light);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* Intro animaatio */
+.intro {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--primary);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeOut 1s ease-in-out 2.5s forwards;
+}
+
+.intro-logo {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 1.5rem;
+    animation: bounce 1.5s ease infinite;
+}
+
+.intro-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(to right, #fff, #f8f9fa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.intro-subtitle {
+    font-size: 1rem;
+    opacity: 0.8;
+}
+
+.loading-bar {
+    width: 200px;
+    height: 4px;
+    background: rgba(255,255,255,0.2);
+    margin-top: 2rem;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.loading-progress {
+    height: 100%;
+    width: 0;
+    background: var(--light);
+    animation: load 2s ease-in-out forwards;
+}
+
+/* Pääsisältö */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    opacity: 0;
+    animation: fadeIn 0.5s ease-out 3s forwards;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.header-left h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(to right, #fff, #f8f9fa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.header-left p {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.header-right {
+    display: flex;
+    gap: 1rem;
+}
+
+.weather-widget {
+    background: rgba(255,255,255,0.1);
+    padding: 0.7rem 1.2rem;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    backdrop-filter: blur(5px);
+    min-width: 140px;
+}
+
+.weather-icon {
+    font-size: 1.3rem;
+}
+
+.weather-temp {
+    font-weight: 600;
+}
+
+.weather-details {
+    font-size: 0.8rem;
+    opacity: 0.8;
+    margin-top: 0.2rem;
+}
+
+.clock {
+    background: rgba(255,255,255,0.1);
+    padding: 0.7rem 1.2rem;
+    border-radius: 50px;
+    font-weight: 600;
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Asetukset-modal */
+.settings-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6);
+    justify-content: center;
+    align-items: center;
+}
+
+.settings-content {
+    background: var(--bg-color, #fff);
+    color: var(--text-color, #000);
+    padding: 20px;
+    border-radius: 12px;
+    min-width: 300px;
+    max-width: 90%;
+    font-family: inherit;
+}
+
+.close-btn {
+    float: right;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.setting-group {
+    margin-bottom: 15px;
+}
+
+.setting-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.setting-group select,
+.setting-group input {
+    width: 100%;
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+/* Tumma teema */
+body.dark-theme {
+    --bg-color: #121212;
+    --text-color: #eee;
+    background: var(--bg-color);
+    color: var(--text-color);
+    --lesson-opacity: 25%;
+}
+
+body.dark-theme .settings-content {
+    background: #1f1f1f;
+    color: #eee;
+}
+
+
+/* Lukujärjestys */
+.timetable {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+#meal-mon, #meal-tue, #meal-wed, #meal-thu, #meal-fri {
+    margin-bottom: 8px;
+}
+
+#mealsGroup label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+#mealsGroup input {
+    flex: 1;
+    margin-left: 10px;
+    padding: 5px;
+}
+
+
+.day-card {
+    background: rgba(255,255,255,0.08);
+    border-radius: 15px;
+    padding: 1.2rem;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.day-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+    background: rgba(255,255,255,0.12);
+}
+
+.highlight-day {
+    border: 2px solid var(--accent-color);
+    box-shadow: 0 0 25px rgba(72, 149, 239, 0.4);
+}
+
+.day-card h2 {
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.day-card h2 i {
+    color: var(--accent);
+}
+
+.lessons-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.lesson {
+    padding: 0.8rem;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.lesson:hover {
+    transform: scale(1.02);
+}
+
+.lesson-time {
+    font-size: 0.8rem;
+    opacity: 0.8;
+    margin-bottom: 0.2rem;
+}
+
+.lesson-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.lesson-subject {
+    font-weight: 600;
+}
+
+.lesson-code {
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
+
+.lesson-info {
+    font-size: 0.8rem;
+    margin-top: 0.4rem;
+    display: flex;
+    justify-content: space-between;
+}
+
+.lesson-room {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.lesson-teacher {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+/* Aineiden värit */
+.lesson.math      { background: color-mix(in srgb, var(--color-math) var(--lesson-opacity), transparent); }
+.lesson.finnish   { background: color-mix(in srgb, var(--color-finnish) var(--lesson-opacity), transparent); }
+.lesson.english   { background: color-mix(in srgb, var(--color-english) var(--lesson-opacity), transparent); }
+.lesson.swedish   { background: color-mix(in srgb, var(--color-swedish) var(--lesson-opacity), transparent); }
+.lesson.languages { background: color-mix(in srgb, var(--color-languages) var(--lesson-opacity), transparent); }
+.lesson.history   { background: color-mix(in srgb, var(--color-history) var(--lesson-opacity), transparent); }
+.lesson.physics   { background: color-mix(in srgb, var(--color-physics) var(--lesson-opacity), transparent); }
+.lesson.sports    { background: color-mix(in srgb, var(--color-sports) var(--lesson-opacity), transparent); }
+.lesson.economics { background: color-mix(in srgb, var(--color-economics) var(--lesson-opacity), transparent); }
+.lesson.event     { background: color-mix(in srgb, var(--color-event) var(--lesson-opacity), transparent); }
+.lesson.geography   { background: color-mix(in srgb, var(--color-geography) var(--lesson-opacity), transparent); }
+.lesson.religion   { background: color-mix(in srgb, var(--color-religion) var(--lesson-opacity), transparent); }
+
+.minigame {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(255,255,255,0.1);
+    border-radius: 15px;
+    text-align: center;
+}
+
+.minigame h3 {
+    margin-bottom: 1rem;
+    font-size: 1.4rem;
+    font-weight: 700;
+    background: linear-gradient(to right, #fff, #f8f9fa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.game-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+}
+
+.game-card {
+    background: rgba(255,255,255,0.15);
+    padding: 1rem;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.game-card:hover {
+    transform: scale(1.08);
+    background: rgba(255,255,255,0.25);
+}
+
+.game-card .icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.choices button {
+    margin: 0.3rem;
+    font-size: 1.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    background: var(--accent-color);
+    color: white;
+    transition: transform 0.2s;
+}
+
+.choices button:hover {
+    transform: scale(1.2);
+}
+
+/* Popup-overlay koko näytölle */
+.rps-popup {
+    display: none; /* piilotettu aluksi */
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(6px);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Sisältö keskellä */
+.rps-popup-content {
+    background: rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 2rem;
+    text-align: center;
+    color: #fff;
+    box-shadow: 0 0 30px rgba(0,0,0,0.6);
+    animation: fadeInScale 0.4s ease;
+}
+
+/* Iso animaatio */
+#rpsAnimation {
+    font-size: 5rem;
+    margin-bottom: 1rem;
+}
+
+.rps-popup-content button {
+    margin-top: 1rem;
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    background: var(--accent-color);
+    color: white;
+    transition: transform 0.2s;
+}
+
+.rps-popup-content button:hover {
+    transform: scale(1.1);
+}
+
+/* Pieni animaatio sisääntulolle */
+@keyframes fadeInScale {
+    from { transform: scale(0.8); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+}
+
+
+.highlight-lesson {
+    box-shadow: 0 0 0 2px var(--light);
+    animation: pulse 2s infinite;
+}
+
+.meal {
+    margin-top: 1.2rem;
+    padding: 0.8rem;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: 600;
+    background: linear-gradient(90deg, #ff9a9e, #fad0c4);
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.highlight-meal {
+    animation: pulse 2s infinite;
+}
+
+/* Bottom nav */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(0,0,0,0.3);
+    backdrop-filter: blur(10px);
+    padding: 0.8rem 0;
+    display: flex;
+    justify-content: center;
+    z-index: 100;
+}
+
+.nav-items {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--light);
+    text-decoration: none;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+}
+
+.nav-item i {
+    font-size: 1.2rem;
+    margin-bottom: 0.3rem;
+}
+
+.nav-item:hover {
+    color: var(--accent);
+    transform: translateY(-3px);
+}
+
+.nav-item.active {
+    color: var(--accent);
+}
+
+/* Animaatiot */
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; visibility: hidden; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+}
+
+@keyframes load {
+    0% { width: 0; }
+    100% { width: 100%; }
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(255,255,255,0); }
+    100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+}
+
+/* Responsiivisuus */
+@media (max-width: 768px) {
+    .header-left h1 {
+        font-size: 1.6rem;
+    }
+    
+    .weather-widget, .clock {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .day-card {
+        padding: 1rem;
+    }
+    
+    .lesson {
+        padding: 0.7rem;
+    }
+
+    .minigame {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .timetable {
+        grid-template-columns: 1fr;
+    }
+    
+    .nav-items {
+        gap: 1rem;
+    }
+}
