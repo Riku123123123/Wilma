@@ -49,6 +49,18 @@
             <div class="settings-content">
                 <span class="close-btn" id="closeSettings">&times;</span>
                 <h2>Asetukset</h2>
+
+                <!-- 📚 Lukujärjestyksen muokkaus -->
+<h3 id="editScheduleToggle" style="cursor:pointer; margin-top:1rem;">
+  <i class="fas fa-pen"></i> Muokkaa lukujärjestystä
+  <i class="fas fa-chevron-down" id="editScheduleArrow"></i>
+</h3>
+
+<div class="setting-group" id="editScheduleGroup" style="display:none; margin-top:10px;">
+  <div id="editScheduleRows"></div>
+  <button id="saveSchedule">💾 Tallenna lukujärjestys</button>
+</div>
+
         
                 <div class="setting-group">
                     <label for="themeSelect">Teema:</label>

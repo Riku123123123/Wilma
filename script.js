@@ -16,22 +16,21 @@ function updateClock() {
     highlightCurrent();
 }
 
-// Rivien määrittely
-const subjects = {
-    1: { name: "Fysiikka", code: "FY05.2", teacher: "AM", room: "B046", color: "physics" },
-    2: { name: "Englanti", code: "ENA06.1", teacher: "JL", room: "A307", color: "english" },
-    3: { name: "Matematiikka", code: "MAA06.3", teacher: "MHEL", room: "A003", color: "math" },
-    4: { name: "Maantieto", code: "GE02.1", teacher: "JLT", room: "B221", color: "geography" },
-    5: { name: "Ruotsi", code: "RUB4.7", teacher: "SK", room: "B221", color: "swedish" },
-    6: { name: "Uskonto", code: "UE02.4", teacher: "JLE", room: "A211", color: "religion" },
-    7: { name: "Äidinkieli", code: "ÄI05.6", teacher: "LH", room: "A311", color: "finnish" },
+let subjects = JSON.parse(localStorage.getItem("customSubjects")) || {
+  1: { name: "(Ei asetettu)", code: "", teacher: "", room: "", color: "default" },
+  2: { name: "(Ei asetettu)", code: "", teacher: "", room: "", color: "default" },
+  3: { name: "(Ei asetettu)", code: "", teacher: "", room: "", color: "default" },
+  4: { name: "(Ei asetettu)", code: "", teacher: "", room: "", color: "default" },
+  5: { name: "(Ei asetettu)", code: "", teacher: "", room: "", color: "default" },
+  6: { name: "(Ei asetettu)", code: "", teacher: "", room: "", color: "default" },
+  7: { name: "(Ei asetettu)", code: "", teacher: "", room: "", color: "default" },
 };
+
 
 // Tuntien aikataulut
 const times = [
     "08:10 - 09:25",
     "09:40 - 10:55",
-    "11:10 - 12:00",
     "12:05 - 13:20",
     "13:35 - 14:50"
 ];
@@ -70,7 +69,6 @@ const schedule = {
     ],
 };
 
-// Luo lukujärjestys automaattisesti
 function generateTimetable() {
     const timetable = document.getElementById("timetable");
     const days = ["", "Maanantai", "Tiistai", "Keskiviikko", "Torstai", "Perjantai"];
@@ -79,6 +77,7 @@ function generateTimetable() {
     for (let d = 1; d <= 5; d++) {
         const dayCard = document.createElement("div");
         dayCard.className = "day-card";
+        dayCard.dataset.day = d; // TÄRKEÄ: jotta highlightCurrent löytää oikean päivän
         dayCard.innerHTML = `<h2><i class="fas fa-calendar-day"></i> ${days[d]}</h2>
             <div class="lessons-container"></div>`;
 
@@ -86,9 +85,11 @@ function generateTimetable() {
 
         schedule[d].forEach(item => {
             const subj = subjects[item.row];
-            const time = times[item.hour - 1];
+            const time = times[item.hour - 1]; // esim. "08:10 - 09:25"
+            const [startHour, startMin] = time.split(" - ")[0].split(":").map(Number);
+
             container.innerHTML += `
-                <div class="lesson ${subj.color}">
+                <div class="lesson ${subj.color}" data-time="${startHour}:${startMin}" data-duration="75">
                     <span class="lesson-time">${time}</span>
                     <div class="lesson-main">
                         <span class="lesson-subject">${subj.name}</span>
@@ -101,17 +102,15 @@ function generateTimetable() {
                 </div>`;
         });
 
-const meals = JSON.parse(localStorage.getItem("meals")) || {};
-const mealKeys = ["mon", "tue", "wed", "thu", "fri"];
-const mealText = meals[mealKeys[d - 1]] || "Ei ruokalistaa";
-
-dayCard.innerHTML += `
-    <div class="meal">
-        <i class="fas fa-utensils"></i>
-        <span>${mealText}</span>
-    </div>
-`;
-
+        // Ruokalista
+        const meals = JSON.parse(localStorage.getItem("meals")) || {};
+        const mealKeys = ["mon", "tue", "wed", "thu", "fri"];
+        const mealText = meals[mealKeys[d - 1]] || "Ei ruokalistaa";
+        dayCard.innerHTML += `
+            <div class="meal">
+                <i class="fas fa-utensils"></i>
+                <span>${mealText}</span>
+            </div>`;
 
         timetable.appendChild(dayCard);
     }
@@ -161,33 +160,35 @@ async function updateWeather() {
 
 // Korostaa nykyisen tunnin ja näyttää jäljellä olevan ajan
 function highlightCurrent() {
-    const now = new Date();
-    let day = now.getDay();
-    let h = now.getHours();
-    let m = now.getMinutes();
-    let s = now.getSeconds();
+    // 🔹 TESTIKELLO – muuta näitä arvoja testataksesi eri tunteja
+    const h = 12;   // tunti (0–23)
+    const m = 15;  // minuutti (0–59)
+    const s = 30;  // sekunti (0–59)
+    const day = 1; // päivä: 1=maanantai, 2=tiistai ..., 5=perjantai
 
+     // Poistetaan aiemmat korostukset
     document.querySelectorAll('.day-card').forEach(card => {
         card.classList.remove('highlight-day');
         card.querySelectorAll('.lesson').forEach(lesson => {
             lesson.classList.remove('highlight-lesson');
             lesson.querySelectorAll('.time-remaining').forEach(el => el.remove());
         });
-        card.querySelector('.meal').classList.remove('highlight-meal');
+        const meal = card.querySelector('.meal');
+        if (meal) meal.classList.remove('highlight-meal');
     });
 
-    // viikonloppu -> ei mitään
-    if (day === 0 || day === 6) return;
+    if (day === 0 || day === 6) return; // viikonloppu
 
     const todayCard = document.querySelector(`.day-card[data-day="${day}"]`);
     if (!todayCard) return;
 
     todayCard.classList.add('highlight-day');
-    todayCard.querySelector('.meal').classList.add('highlight-meal');
+    const meal = todayCard.querySelector('.meal');
+    if (meal) meal.classList.add('highlight-meal');
 
     todayCard.querySelectorAll('.lesson').forEach(lesson => {
         const [lh, lm] = lesson.dataset.time.split(':').map(Number);
-        const duration = parseInt(lesson.dataset.duration) || 75; // oletus 75 min
+        const duration = parseInt(lesson.dataset.duration) || 75;
         const lessonStart = lh * 60 + lm;
         const lessonEnd = lessonStart + duration;
         const nowSeconds = h * 3600 + m * 60 + s;
@@ -201,18 +202,88 @@ function highlightCurrent() {
 
             const remainingText = document.createElement('span');
             remainingText.className = 'time-remaining';
-            remainingText.style.marginLeft = '10px';
-            remainingText.style.padding = '2px 6px';
-            remainingText.style.borderRadius = '6px';
-            remainingText.style.backgroundColor = '#ff9800';
-            remainingText.style.color = '#fff';
-            remainingText.style.fontWeight = 'bold';
-            remainingText.textContent = `Jäljellä ${remMin} min ${remSec.toString().padStart(2, '0')} s`;
+            remainingText.textContent = `Jäljellä ${remMin} min ${remSec.toString().padStart(2,'0')} s`;
+            lesson.appendChild(remainingText);
 
-            lesson.querySelector('.lesson-time').appendChild(remainingText);
+            remainingText.addEventListener('click', () => {
+    // Pomppiva, heiluva ja väriä vaihtava surprise-laatikko
+    const egg = document.createElement('div');
+    egg.textContent = '🎉 Yllätys! 🎉';
+    egg.style.position = 'absolute';
+    egg.style.top = '50%';
+    egg.style.left = '50%';
+    egg.style.transform = 'translate(-50%, -50%)';
+    egg.style.padding = '12px 20px';
+    egg.style.borderRadius = '12px';
+    egg.style.boxShadow = '0 0 15px #000';
+    egg.style.zIndex = 9999;
+    egg.style.fontSize = '24px';
+    egg.style.fontWeight = 'bold';
+    egg.style.textAlign = 'center';
+    document.body.appendChild(egg);
+
+    let angle = 0;
+    let scale = 1;
+    let direction = 1;
+
+    const eggAnim = setInterval(() => {
+        angle += (Math.random() * 20 - 10);
+        scale += 0.05 * direction;
+        if (scale > 1.5 || scale < 0.8) direction *= -1;
+        egg.style.transform = `translate(-50%, -50%) rotate(${angle}deg) scale(${scale})`;
+
+        const r = Math.floor(Math.random() * 256);
+        const g = Math.floor(Math.random() * 256);
+        const b = Math.floor(Math.random() * 256);
+        egg.style.backgroundColor = `rgb(${r},${g},${b})`;
+        egg.style.color = `rgb(${255 - r}, ${255 - g}, ${255 - b})`;
+    }, 50);
+
+    // Konfettisade
+    const confettiCount = 150;
+    const confettis = [];
+    for (let i = 0; i < confettiCount; i++) {
+        const c = document.createElement('div');
+        c.style.position = 'absolute';
+        c.style.width = '8px';
+        c.style.height = '8px';
+        c.style.backgroundColor = `hsl(${Math.random()*360}, 100%, 50%)`;
+        c.style.left = Math.random() * window.innerWidth + 'px';
+        c.style.top = Math.random() * window.innerHeight - window.innerHeight + 'px';
+        c.style.opacity = Math.random();
+        c.style.borderRadius = '50%';
+        c.style.zIndex = 9998;
+        document.body.appendChild(c);
+        confettis.push({el: c, speed: Math.random()*3 + 2});
+    }
+
+    const confettiAnim = setInterval(() => {
+        confettis.forEach(c => {
+            let top = parseFloat(c.el.style.top);
+            top += c.speed;
+            if (top > window.innerHeight) top = -10;
+            c.el.style.top = top + 'px';
+        });
+    }, 30);
+
+    // Ääni
+    const audio = new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3');
+    audio.volume = 0.3;
+    audio.play();
+
+    // Poistetaan efektit 3 sekunnin kuluttua
+    setTimeout(() => {
+        clearInterval(eggAnim);
+        clearInterval(confettiAnim);
+        egg.remove();
+        confettis.forEach(c => c.el.remove());
+    }, 3000);
+});
+
         }
     });
 }
+
 
 // Alustus
 updateClock();
@@ -291,7 +362,7 @@ if (savedFontSize) {
 
 // Aineiden värit
 const subjectColors = [
-    "math", "finnish", "english", "swedish", "languages",
+    "default", "freetime", "math", "finnish", "english", "swedish", "languages",
     "history", "physics", "sports", "economics", "event",
     "geography", "religion",
 ];
@@ -500,3 +571,81 @@ function showToast(message) {
         toast.classList.remove("show");
     }, 2500);
 }
+
+// 📚 Lukujärjestyksen muokkaus
+const editScheduleToggle = document.getElementById("editScheduleToggle");
+const editScheduleGroup = document.getElementById("editScheduleGroup");
+const editScheduleArrow = document.getElementById("editScheduleArrow");
+const editScheduleRows = document.getElementById("editScheduleRows");
+const saveSchedule = document.getElementById("saveSchedule");
+
+editScheduleToggle.addEventListener("click", () => {
+  if (editScheduleGroup.style.display === "none") {
+    editScheduleGroup.style.display = "block";
+    editScheduleArrow.classList.replace("fa-chevron-down", "fa-chevron-up");
+    renderScheduleEditor();
+  } else {
+    editScheduleGroup.style.display = "none";
+    editScheduleArrow.classList.replace("fa-chevron-up", "fa-chevron-down");
+  }
+});
+
+function renderScheduleEditor() {
+  editScheduleRows.innerHTML = "";
+  for (let i = 1; i <= 7; i++) {
+    const s = subjects[i];
+    const row = document.createElement("div");
+    row.classList.add("schedule-row");
+    row.innerHTML = `
+      <label><b>Rivi ${i}</b></label>
+        <select id="subj-color-${i}">
+        <option value="default">(Ei asetettu)</option>
+        <option value="freetime">Hyppytunti</option>
+        <option value="math">Matematiikka</option>
+        <option value="finnish">Äidinkieli</option>
+        <option value="english">Englanti</option>
+        <option value="swedish">Ruotsi</option>
+        <option value="physics">Fysiikka</option>
+        <option value="geography">Maantieto</option>
+        <option value="biology">Biologia</option>
+        <option value="health">Terveystieto</option>
+        <option value="psychology">Psykologia</option>
+        <option value="society">Yhteiskuntaoppi</option>
+        <option value="history">Historia</option>
+        <option value="religion">Uskonto</option>
+        <option value="philosophy">Filosofia</option>
+        <option value="sports">Liikunta</option>
+        <option value="arts">Kuvataide</option>
+        <option value="event">Tapahtuma</option>
+      </select>
+      <input type="text" id="subj-code-${i}" placeholder="Koodi" value="${s.code}">
+      <input type="text" id="subj-teacher-${i}" placeholder="Opettaja" value="${s.teacher}">
+      <input type="text" id="subj-room-${i}" placeholder="Luokka" value="${s.room}">
+    `;
+    editScheduleRows.appendChild(row);
+    document.getElementById(`subj-color-${i}`).value = s.color;
+  }
+}
+
+saveSchedule.addEventListener("click", () => {
+  const updatedSubjects = {};
+
+  for (let i = 1; i <= 7; i++) {
+    const selectEl = document.getElementById(`subj-color-${i}`);
+    const selectedName = selectEl.options[selectEl.selectedIndex].text;
+    const colorVal = selectEl.value;
+
+    updatedSubjects[i] = {
+      name: colorVal === "default" ? "(Ei asetettu)" : selectedName,
+      code: document.getElementById(`subj-code-${i}`).value || "",
+      teacher: document.getElementById(`subj-teacher-${i}`).value || "",
+      room: document.getElementById(`subj-room-${i}`).value || "",
+      color: colorVal === "default" ? "default" : colorVal
+    };
+  }
+
+  localStorage.setItem("customSubjects", JSON.stringify(updatedSubjects));
+  subjects = updatedSubjects;
+  generateTimetable();
+  showToast("📅 Lukujärjestys tallennettu!");
+});

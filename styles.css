@@ -10,12 +10,24 @@
     --color-finnish: #ff4081;
     --color-english: #00c853;
     --color-swedish: #ffc107;
-    --color-history: #ffc107;
+    --color-history: #b69430;
     --color-physics: #9c27b0;
     --color-sports: #ff5722;
     --color-economics: #2196f3;
     --color-event: #26c6da;
+    --color-freetime: #eeff00;
+    --color-religion: #f5ff70;
+    --color-geography: #038d5f;
+    --color-default: #1f3d41;
     --lesson-opacity: 50%;
+    --text-color: #111;
+    --bg-color: #ffffff;
+    --input-bg: rgba(0, 0, 0, 0.05);
+    --input-border: rgba(0, 0, 0, 0.2);
+    --input-text: #111;
+    --row-bg: rgba(0, 0, 0, 0.04);
+    --row-hover: rgba(0, 0, 0, 0.08);
+    --lesson-opacity: 60%;
 }
 
 /* Korostusvärin käyttö painikkeissa */
@@ -62,6 +74,13 @@ button:hover, .btn:hover {
   transform: translateY(0);
 }
 
+.time-remaining {
+    border-radius: 6px;
+    background-color: var(--accent-color);
+    color: #000000;
+    font-weight: bold;
+    text-align: center;
+}
 
 
 
@@ -226,6 +245,114 @@ header {
     font-family: inherit;
 }
 
+/* 📚 Lukujärjestyksen muokkausalue */
+#editScheduleGroup {
+  margin-top: 1rem;
+  background: var(--row-bg);
+  padding: 1rem;
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  max-height: 400px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-color) var(--row-bg);
+}
+
+/* Tyylikäs skrollipalkki Chromessa ja Edge:ssä */
+#editScheduleGroup::-webkit-scrollbar {
+  width: 8px;
+}
+#editScheduleGroup::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.1);
+  border-radius: 10px;
+}
+#editScheduleGroup::-webkit-scrollbar-thumb {
+  background: var(--accent-color);
+  border-radius: 10px;
+}
+
+#editScheduleGroup::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--accent-color) 85%, black 15%);
+}
+
+.schedule-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  background: var(--row-bg);
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  transition: background 0.2s ease;
+}
+
+.schedule-row:hover {
+  background: var(--row-hover);
+}
+.schedule-row label {
+  flex-basis: 100%;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 4px;
+}
+
+.schedule-row input,
+.schedule-row select {
+  flex: 1 1 160px;
+  min-width: 120px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--input-text);
+  font-size: 0.9rem;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.schedule-row input:focus,
+.schedule-row select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 20%, var(--input-bg));
+}
+
+/* Option-tekstit aina mustia (ettei tummu liikaa) */
+.schedule-row select option {
+  color: #000;
+}
+
+/* Tallenna-nappi */
+#saveSchedule {
+  width: 100%;
+  margin-top: 0.8rem;
+  font-weight: bold;
+  font-size: 1rem;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--accent-color);
+  color: #fff;
+  transition: transform 0.2s;
+}
+
+#saveSchedule:hover {
+  transform: scale(1.02);
+}
+
+/* 📱 Mobiililaitteille */
+@media (max-width: 600px) {
+  .schedule-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .schedule-row input,
+  .schedule-row select {
+    width: 100%;
+  }
+}
+
+
 .close-btn {
     float: right;
     font-size: 24px;
@@ -257,6 +384,17 @@ body.dark-theme {
     background: var(--bg-color);
     color: var(--text-color);
     --lesson-opacity: 25%;
+    --primary: #1e1e2e;
+  --secondary: #313244;
+  --light: #f8f9fa;
+  --dark: #111;
+  --text-color: #eee;
+  --bg-color: #121212;
+  --input-bg: rgba(255, 255, 255, 0.1);
+  --input-border: rgba(255, 255, 255, 0.25);
+  --input-text: #fff;
+  --row-bg: rgba(255, 255, 255, 0.05);
+  --row-hover: rgba(255, 255, 255, 0.1);
 }
 
 body.dark-theme .settings-content {
@@ -382,6 +520,7 @@ body.dark-theme .settings-content {
 }
 
 /* Aineiden värit */
+.lesson.default   { background: color-mix(in srgb, var(--color-default) var(--lesson-opacity), transparent); }
 .lesson.math      { background: color-mix(in srgb, var(--color-math) var(--lesson-opacity), transparent); }
 .lesson.finnish   { background: color-mix(in srgb, var(--color-finnish) var(--lesson-opacity), transparent); }
 .lesson.english   { background: color-mix(in srgb, var(--color-english) var(--lesson-opacity), transparent); }
@@ -392,8 +531,9 @@ body.dark-theme .settings-content {
 .lesson.sports    { background: color-mix(in srgb, var(--color-sports) var(--lesson-opacity), transparent); }
 .lesson.economics { background: color-mix(in srgb, var(--color-economics) var(--lesson-opacity), transparent); }
 .lesson.event     { background: color-mix(in srgb, var(--color-event) var(--lesson-opacity), transparent); }
-.lesson.geography   { background: color-mix(in srgb, var(--color-geography) var(--lesson-opacity), transparent); }
-.lesson.religion   { background: color-mix(in srgb, var(--color-religion) var(--lesson-opacity), transparent); }
+.lesson.freetime  { background: color-mix(in srgb, var(--color-freetime) var(--lesson-opacity), transparent); }
+.lesson.geography { background: color-mix(in srgb, var(--color-geography) var(--lesson-opacity), transparent); }
+.lesson.religion  { background: color-mix(in srgb, var(--color-religion) var(--lesson-opacity), transparent); }
 
 .minigame {
     margin-top: 1.5rem;
