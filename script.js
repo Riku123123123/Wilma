@@ -16,6 +16,107 @@ function updateClock() {
     highlightCurrent();
 }
 
+// Rivien määrittely
+const subjects = {
+    1: { name: "Fysiikka", code: "FY05.2", teacher: "AM", room: "B046", color: "physics" },
+    2: { name: "Englanti", code: "ENA06.1", teacher: "JL", room: "A307", color: "english" },
+    3: { name: "Matematiikka", code: "MAA06.3", teacher: "MHEL", room: "A003", color: "math" },
+    4: { name: "Maantieto", code: "GE02.1", teacher: "JLT", room: "B221", color: "geography" },
+    5: { name: "Ruotsi", code: "RUB4.7", teacher: "SK", room: "B221", color: "swedish" },
+    6: { name: "Uskonto", code: "UE02.4", teacher: "JLE", room: "A211", color: "religion" },
+    7: { name: "Äidinkieli", code: "ÄI05.6", teacher: "LH", room: "A311", color: "finnish" },
+};
+
+// Tuntien aikataulut
+const times = [
+    "08:10 - 09:25",
+    "09:40 - 10:55",
+    "11:10 - 12:00",
+    "12:05 - 13:20",
+    "13:35 - 14:50"
+];
+
+// Miten rivit sijoittuvat päiviin
+const schedule = {
+    1: [ // Maanantai
+        { row: 6, hour: 1 },
+        { row: 3, hour: 2 },
+        { row: 7, hour: 3 },
+        { row: 1, hour: 4 },
+    ],
+    2: [ // Tiistai
+        { row: 4, hour: 1 },
+        { row: 6, hour: 2 },
+        { row: 5, hour: 3 },
+        { row: 2, hour: 4 },
+    ],
+    3: [ // Keskiviikko
+        { row: 5, hour: 1 },
+        { row: 1, hour: 2 },
+        { row: 2, hour: 3 },
+        { row: 3, hour: 4 },
+    ],
+    4: [ // Torstai
+        { row: 4, hour: 1 },
+        { row: 6, hour: 2 },
+        { row: 1, hour: 3 },
+        { row: 7, hour: 4 },
+    ],
+    5: [ // Perjantai
+        { row: 5, hour: 1 },
+        { row: 3, hour: 2 },
+        { row: 4, hour: 3 },
+        { row: 2, hour: 4 },
+    ],
+};
+
+// Luo lukujärjestys automaattisesti
+function generateTimetable() {
+    const timetable = document.getElementById("timetable");
+    const days = ["", "Maanantai", "Tiistai", "Keskiviikko", "Torstai", "Perjantai"];
+    timetable.innerHTML = "";
+
+    for (let d = 1; d <= 5; d++) {
+        const dayCard = document.createElement("div");
+        dayCard.className = "day-card";
+        dayCard.innerHTML = `<h2><i class="fas fa-calendar-day"></i> ${days[d]}</h2>
+            <div class="lessons-container"></div>`;
+
+        const container = dayCard.querySelector(".lessons-container");
+
+        schedule[d].forEach(item => {
+            const subj = subjects[item.row];
+            const time = times[item.hour - 1];
+            container.innerHTML += `
+                <div class="lesson ${subj.color}">
+                    <span class="lesson-time">${time}</span>
+                    <div class="lesson-main">
+                        <span class="lesson-subject">${subj.name}</span>
+                        <span class="lesson-code">${subj.code}</span>
+                    </div>
+                    <div class="lesson-info">
+                        <span class="lesson-room"><i class="fas fa-door-open"></i> ${subj.room}</span>
+                        <span class="lesson-teacher"><i class="fas fa-chalkboard-teacher"></i> ${subj.teacher}</span>
+                    </div>
+                </div>`;
+        });
+
+const meals = JSON.parse(localStorage.getItem("meals")) || {};
+const mealKeys = ["mon", "tue", "wed", "thu", "fri"];
+const mealText = meals[mealKeys[d - 1]] || "Ei ruokalistaa";
+
+dayCard.innerHTML += `
+    <div class="meal">
+        <i class="fas fa-utensils"></i>
+        <span>${mealText}</span>
+    </div>
+`;
+
+
+        timetable.appendChild(dayCard);
+    }
+}
+
 // Säätiedot Raumalle
 async function updateWeather() {
     const apiKey = 'd6149ddcc486b4c7e8b6cf842aa88d49'; // korvaa oikealla
@@ -308,26 +409,30 @@ document.getElementById("saveMeals").addEventListener("click", () => {
         fri: document.getElementById("meal-fri").value,
     };
     localStorage.setItem("meals", JSON.stringify(meals));
-    alert("Ruokalista tallennettu!");
+    showToast("🍽️ Ruokalista tallennettu!");
     updateMeals();
 });
 
-// Päivitetään näkyviin ruokalista
 function updateMeals() {
     const savedMeals = JSON.parse(localStorage.getItem("meals"));
     if (!savedMeals) return;
 
-    const days = ["mon", "tue", "wed", "thu", "fri"];
+    // Päivien avaimet ja kortit
+    const dayKeys = ["mon", "tue", "wed", "thu", "fri"];
     const dayCards = document.querySelectorAll(".day-card");
 
     dayCards.forEach((card, index) => {
+        // Hae vastaava ruoka tallennuksesta
+        const mealText = savedMeals[dayKeys[index]] || "Ei ruokalistaa";
+
+        // Hae kortin ruokaelementti
         const mealEl = card.querySelector(".meal span");
-        if (mealEl && savedMeals[days[index]]) {
-            mealEl.textContent = savedMeals[days[index]];
-        }
+
+        // Jos löytyy, vaihda teksti
+        if (mealEl) mealEl.textContent = mealText;
     });
 
-    // Esitäytetään asetuksissa kentät tallennetuilla arvoilla
+    // Päivitä myös asetuskentät, jos ne on olemassa
     if (document.getElementById("meal-mon")) {
         document.getElementById("meal-mon").value = savedMeals.mon || "";
         document.getElementById("meal-tue").value = savedMeals.tue || "";
@@ -337,8 +442,10 @@ function updateMeals() {
     }
 }
 
-// Käynnistyksessä päivitä
+
+
 window.addEventListener("DOMContentLoaded", () => {
+    generateTimetable();
     updateMeals();
 });
 
@@ -381,3 +488,15 @@ window.addEventListener('DOMContentLoaded', () => {
         document.documentElement.style.setProperty('--accent-color', savedAccent);
     }
 });
+
+// Näyttää hienon toast-ilmoituksen
+function showToast(message) {
+    const toast = document.getElementById("toast");
+    toast.textContent = message;
+    toast.classList.add("show");
+
+    // Piilota 2.5 sekunnin kuluttua
+    setTimeout(() => {
+        toast.classList.remove("show");
+    }, 2500);
+}

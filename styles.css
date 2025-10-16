@@ -40,6 +40,29 @@ button:hover, .btn:hover {
     border-radius: 8px;
 }
 
+/* 🍞 Toast-ilmoitus */
+.toast {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background: var(--accent-color);
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 15px;
+  opacity: 0;
+  transform: translateY(40px);
+  transition: all 1s ease;
+  z-index: 1000;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+
 
 
 * {
