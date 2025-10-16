@@ -12,6 +12,11 @@
     --color-swedish: #ffc107;
     --color-history: #b69430;
     --color-physics: #9c27b0;
+    --color-arts: #ffc107;
+    --color-psychology: #b69430;
+    --color-philosophy: #9c27b0;
+    --color-health: #ffc107;
+    --color-biology: #b69430;
     --color-sports: #ff5722;
     --color-economics: #2196f3;
     --color-event: #26c6da;
@@ -377,6 +382,182 @@ header {
     border: 1px solid #ccc;
 }
 
+/* 🎨 Aineiden värit - korjattu grid-asetelu */
+.subject-colors-header {
+    margin: 20px 0 10px 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--accent-color);
+}
+
+.subject-colors-header h4 {
+    color: var(--accent-color);
+    font-size: 1rem;
+    margin: 0;
+    font-weight: 600;
+}
+
+.subject-color-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
+    gap: 12px;
+    margin: 10px 0 20px 0;
+}
+
+.subject-color-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: var(--row-bg);
+    border-radius: 12px;
+    border: 1px solid var(--input-border);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    min-height: 70px;
+}
+
+.subject-color-item:hover {
+    background: var(--row-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+}
+
+.color-preview {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: 2px solid rgba(255,255,255,0.3);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.8);
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.subject-color-item:hover .color-preview {
+    transform: scale(1.15) rotate(5deg);
+}
+
+.color-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.color-info label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.color-input {
+    width: 100%;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: transparent;
+}
+
+.color-input::-webkit-color-swatch {
+    border: 2px solid var(--input-border);
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.color-input::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+/* Scroll-alue, jos tarvitaan */
+.subject-colors-scroll {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.subject-colors-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+.subject-colors-scroll::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+}
+
+.subject-colors-scroll::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 3px;
+}
+
+/* Reset-nappi */
+#resetColors {
+    width: 100%;
+    margin-top: 15px;
+    padding: 12px;
+    background: linear-gradient(135deg, var(--accent-color), color-mix(in srgb, var(--accent-color) 80%, black 20%));
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#resetColors:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* Responsiivisuus */
+@media (max-width: 768px) {
+    .subject-color-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
+        gap: 10px;
+    }
+    
+    .subject-color-item {
+        padding: 12px;
+        gap: 12px;
+        min-height: 65px;
+    }
+    
+    .color-preview {
+        width: 35px;
+        height: 35px;
+    }
+}
+
+@media (max-width: 480px) {
+    .subject-color-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+    
+    .subject-color-item {
+        padding: 10px;
+        gap: 10px;
+        min-height: 60px;
+    }
+    
+    .color-preview {
+        width: 30px;
+        height: 30px;
+    }
+    
+    .color-info label {
+        font-size: 0.8rem;
+    }
+}
 /* Tumma teema */
 body.dark-theme {
     --bg-color: #121212;
@@ -527,6 +708,10 @@ body.dark-theme .settings-content {
 .lesson.swedish   { background: color-mix(in srgb, var(--color-swedish) var(--lesson-opacity), transparent); }
 .lesson.languages { background: color-mix(in srgb, var(--color-languages) var(--lesson-opacity), transparent); }
 .lesson.history   { background: color-mix(in srgb, var(--color-history) var(--lesson-opacity), transparent); }
+.lesson.health   { background: color-mix(in srgb, var(--color-health) var(--lesson-opacity), transparent); }
+.lesson.psychology   { background: color-mix(in srgb, var(--color-psychology) var(--lesson-opacity), transparent); }
+.lesson.arts   { background: color-mix(in srgb, var(--color-arts) var(--lesson-opacity), transparent); }
+.lesson.biology   { background: color-mix(in srgb, var(--color-biology) var(--lesson-opacity), transparent); }
 .lesson.physics   { background: color-mix(in srgb, var(--color-physics) var(--lesson-opacity), transparent); }
 .lesson.sports    { background: color-mix(in srgb, var(--color-sports) var(--lesson-opacity), transparent); }
 .lesson.economics { background: color-mix(in srgb, var(--color-economics) var(--lesson-opacity), transparent); }

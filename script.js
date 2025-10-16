@@ -159,12 +159,12 @@ async function updateWeather() {
 }
 
 // Korostaa nykyisen tunnin ja näyttää jäljellä olevan ajan
-function highlightCurrent() {
-    // 🔹 TESTIKELLO – muuta näitä arvoja testataksesi eri tunteja
-    const h = 12;   // tunti (0–23)
-    const m = 15;  // minuutti (0–59)
-    const s = 30;  // sekunti (0–59)
-    const day = 1; // päivä: 1=maanantai, 2=tiistai ..., 5=perjantai
+function highlightCurrent() 
+{ const now = new Date(); 
+    let day = now.getDay();
+    let h = now.getHours();
+    let m = now.getMinutes();
+    let s = now.getSeconds();
 
      // Poistetaan aiemmat korostukset
     document.querySelectorAll('.day-card').forEach(card => {
@@ -360,47 +360,144 @@ if (savedFontSize) {
 }
 
 
-// Aineiden värit
-const subjectColors = [
-    "default", "freetime", "math", "finnish", "english", "swedish", "languages",
-    "history", "physics", "sports", "economics", "event",
-    "geography", "religion",
-];
-
-subjectColors.forEach(subject => {
-    const input = document.getElementById(`color-${subject}`);
-    if (input) {
-        // Lataa tallennettu väri jos löytyy
-        const saved = localStorage.getItem(`color-${subject}`);
-        if (saved) {
-            input.value = saved;
-            document.documentElement.style.setProperty(`--color-${subject}`, saved);
+// 🎨 Alusta aineiden värit sivun latautuessa
+window.addEventListener('DOMContentLoaded', () => {
+    // Lataa tallennetut värit tai käytä oletusarvoja
+    Object.entries(subjectColorDefinitions).forEach(([key, config]) => {
+        const savedColor = localStorage.getItem(`color-${key}`);
+        if (savedColor) {
+            document.documentElement.style.setProperty(`--color-${key}`, savedColor);
+        } else {
+            document.documentElement.style.setProperty(`--color-${key}`, config.default);
         }
-
-        // Päivitä kun käyttäjä vaihtaa
-        input.addEventListener("input", () => {
-            document.documentElement.style.setProperty(`--color-${subject}`, input.value);
-            localStorage.setItem(`color-${subject}`, input.value);
-        });
-    }
+    });
+    
+    // Alusta värimuokkauskentät heti
+    initializeSubjectColors();
 });
+
+// 🎨 Aineiden värit - automatisoidut asetukset
+const subjectColorDefinitions = {
+    "default": { name: "Oletus", default: "#1f3d41" },
+    "freetime": { name: "Hyppytunti", default: "#eeff00" },
+    "math": { name: "Matematiikka", default: "#007bff" },
+    "finnish": { name: "Äidinkieli", default: "#ff4081" },
+    "english": { name: "Englanti", default: "#00c853" },
+    "swedish": { name: "Ruotsi", default: "#ffc107" },
+    "physics": { name: "Fysiikka", default: "#9c27b0" },
+    "geography": { name: "Maantieto", default: "#038d5f" },
+    "biology": { name: "Biologia", default: "#b69430" },
+    "health": { name: "Terveystieto", default: "#ffc107" },
+    "psychology": { name: "Psykologia", default: "#b69430" },
+    "economics": { name: "Yhteiskuntaoppi", default: "#2196f3" },
+    "history": { name: "Historia", default: "#b69430" },
+    "religion": { name: "Uskonto", default: "#f5ff70" },
+    "philosophy": { name: "Filosofia", default: "#9c27b0" },
+    "sports": { name: "Liikunta", default: "#ff5722" },
+    "arts": { name: "Kuvataide", default: "#ffc107" },
+    "event": { name: "Tapahtuma", default: "#26c6da" }
+};
+
+function initializeSubjectColors() {
+    const container = document.getElementById("subjectColorsContainer");
+    if (!container) {
+        console.error("subjectColorsContainer-elementtiä ei löydy");
+        return;
+    }
+    
+    // Luo siisti grid-asetelu
+    container.innerHTML = `
+        <div class="subject-color-grid" id="subjectColorGrid">
+            <!-- Värit generoidaan JavaScriptillä -->
+        </div>
+    `;
+    const grid = document.getElementById("subjectColorGrid");
+
+    // Luo väriasettelu jokaiselle aineelle
+    Object.entries(subjectColorDefinitions).forEach(([key, config]) => {
+        const colorItem = document.createElement("div");
+        colorItem.className = "subject-color-item";
+        colorItem.title = `Muokkaa ${config.name} väriä`;
+        
+        // Lataa tallennettu väri tai käytä oletusarvoa
+        const savedColor = localStorage.getItem(`color-${key}`);
+        const currentColor = savedColor || config.default;
+        
+        colorItem.innerHTML = `
+            <div class="color-preview" style="background-color: ${currentColor}"></div>
+            <div class="color-info">
+                <label for="color-${key}">${config.name}</label>
+                <input type="color" id="color-${key}" value="${currentColor}" 
+                       class="color-input">
+            </div>
+        `;
+        grid.appendChild(colorItem);
+
+        // Aseta väri CSS-muuttujaan
+        document.documentElement.style.setProperty(`--color-${key}`, currentColor);
+
+        // Kuuntele värin muutoksia
+        const colorInput = colorItem.querySelector('.color-input');
+        const colorPreview = colorItem.querySelector('.color-preview');
+        
+        colorInput.addEventListener("input", (e) => {
+            const newColor = e.target.value;
+            document.documentElement.style.setProperty(`--color-${key}`, newColor);
+            localStorage.setItem(`color-${key}`, newColor);
+            colorPreview.style.backgroundColor = newColor;
+            
+            // Päivitä lukujärjestys reaaliaikaisesti
+            generateTimetable();
+        });
+    });
+
+    // Palauta oletusvärit -nappi
+    const resetButton = document.getElementById("resetColors");
+    if (resetButton) {
+        resetButton.addEventListener("click", resetSubjectColors);
+    }
+}
+
+function resetSubjectColors() {
+    if (confirm("Haluatko varmasti palauttaa kaikki värit oletusarvoihin?")) {
+        Object.entries(subjectColorDefinitions).forEach(([key, config]) => {
+            // Poista tallennetut värit
+            localStorage.removeItem(`color-${key}`);
+            
+            // Palauta oletusväri
+            document.documentElement.style.setProperty(`--color-${key}`, config.default);
+            
+            // Päivitä input-kenttä
+            const colorInput = document.getElementById(`color-${key}`);
+            if (colorInput) {
+                colorInput.value = config.default;
+            }
+        });
+        
+        // Päivitä lukujärjestys
+        generateTimetable();
+        showToast("🎨 Värit palautettu oletusarvoihin!");
+    }
+}
 
 // 🎨 Aineiden värien lista auki/kiinni
 const subjectColorsToggle = document.getElementById("subjectColorsToggle");
 const subjectColorsGroup = document.getElementById("subjectColorsGroup");
 const subjectColorsArrow = document.getElementById("subjectColorsArrow");
 
-subjectColorsToggle.addEventListener("click", () => {
-    if (subjectColorsGroup.style.display === "none") {
-        subjectColorsGroup.style.display = "block";
-        subjectColorsArrow.classList.remove("fa-chevron-down");
-        subjectColorsArrow.classList.add("fa-chevron-up");
-    } else {
-        subjectColorsGroup.style.display = "none";
-        subjectColorsArrow.classList.remove("fa-chevron-up");
-        subjectColorsArrow.classList.add("fa-chevron-down");
-    }
-});
+if (subjectColorsToggle && subjectColorsGroup) {
+    subjectColorsToggle.addEventListener("click", () => {
+        if (subjectColorsGroup.style.display === "none" || subjectColorsGroup.style.display === "") {
+            subjectColorsGroup.style.display = "block";
+            subjectColorsArrow.classList.remove("fa-chevron-down");
+            subjectColorsArrow.classList.add("fa-chevron-up");
+        } else {
+            subjectColorsGroup.style.display = "none";
+            subjectColorsArrow.classList.remove("fa-chevron-up");
+            subjectColorsArrow.classList.add("fa-chevron-down");
+        }
+    });
+}
 
 function openExternalGame(url) {
     window.open(url, "_blank");
@@ -610,7 +707,7 @@ function renderScheduleEditor() {
         <option value="biology">Biologia</option>
         <option value="health">Terveystieto</option>
         <option value="psychology">Psykologia</option>
-        <option value="society">Yhteiskuntaoppi</option>
+        <option value="economics">Yhteiskuntaoppi</option>
         <option value="history">Historia</option>
         <option value="religion">Uskonto</option>
         <option value="philosophy">Filosofia</option>
