@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Koulun lukujärjestys - Rauma</title>
+    <meta name="description" content="Rauman lukiossa käytettävä lukujärjestyssovellus">
+    <title>Koulun lukujärjestys - Rauman lukio</title>
+    
+    <!-- Fontit ja tyylit -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
@@ -11,8 +14,8 @@
 </head>
 <body>
     <!-- Intro animaatio -->
-    <div class="intro">
-        <svg class="intro-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <div class="intro" role="alert" aria-live="polite">
+        <svg class="intro-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
             <circle cx="12" cy="10" r="2"></circle>
@@ -21,173 +24,721 @@
         <h1 class="intro-title">Rauman lukio</h1>
         <p class="intro-subtitle">2. periodin lukujärjestys</p>
         <div class="loading-bar">
-            <div class="loading-progress"></div>
+            <div class="loading-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
         </div>
     </div>
 
     <!-- Pääsisältö -->
-    <div class="container">
-        <header>
+    <main class="container" role="main">
+        <header class="page-header">
             <div class="header-left">
                 <h1>Lukujärjestys</h1>
-                <p>29.08.2025 - 17.11.2025 • 2. periodi</p>
+                <div class="period-selector">
+                    <label for="periodSelect" class="sr-only">Valitse periodi</label>
+                    <select id="periodSelect" aria-describedby="periodDates">
+                        <option value="1">1. periodi</option>
+                        <option value="2" selected>2. periodi</option>
+                        <option value="3">3. periodi</option>
+                        <option value="4">4. periodi</option>
+                        <option value="5">5. periodi</option>
+                    </select>
+                    <span id="periodDates" aria-live="polite">29.08.2025 - 17.11.2025</span>
+                </div>
             </div>
             <div class="header-right">
-                <div class="weather-widget">
-                    <i class="fas fa-question weather-icon"></i>
+                <div class="weather-widget" role="status" aria-live="polite">
+                    <i class="fas fa-question weather-icon" aria-hidden="true"></i>
                     <div>
                         <span class="weather-temp">Ladataan...</span>
                         <div class="weather-details">Rauma</div>
                     </div>
                 </div>
-                <div class="clock" id="clock">Kello 00:00</div>
+                <div class="clock" id="clock" role="timer" aria-live="polite">Kello 00:00</div>
             </div>
         </header>
 
-         <!-- Asetukset-modal -->
-        <div id="settingsModal" class="settings-modal">
-            <div class="settings-content">
-                <span class="close-btn" id="closeSettings">&times;</span>
-                <h2>Asetukset</h2>
+        <!-- Tilastot ja info-palkki -->
+        <section class="stats-bar" aria-label="Lukujärjestyksen tilastot">
+            <div class="stat-item">
+                <i class="fas fa-book" aria-hidden="true"></i>
+                <span id="totalLessons">0 oppituntia</span>
+            </div>
+            <div class="stat-item">
+                <i class="fas fa-running" aria-hidden="true"></i>
+                <span id="sportsLessons">0 liikuntaa</span>
+            </div>
+            <div class="stat-item">
+                <i class="fas fa-clock" aria-hidden="true"></i>
+                <span id="freeLessons">0 vapaata</span>
+            </div>
+            <div class="stat-item" id="nextLessonInfo">
+                <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                <span>Seuraava: Lataa...</span>
+            </div>
+        </section>
 
-                <!-- 📚 Lukujärjestyksen muokkaus -->
-<h3 id="editScheduleToggle" style="cursor:pointer; margin-top:1rem;">
-  <i class="fas fa-pen"></i> Muokkaa lukujärjestystä
-  <i class="fas fa-chevron-down" id="editScheduleArrow"></i>
-</h3>
+        <!-- Lukujärjestys -->
+        <section class="timetable-section" aria-labelledby="timetable-heading">
+            <h2 id="timetable-heading" class="sr-only">Viikon lukujärjestys</h2>
+            <div class="timetable" id="timetable" role="grid" aria-label="Lukujärjestys"></div>
+        </section>
 
-<div class="setting-group" id="editScheduleGroup" style="display:none; margin-top:10px;">
-  <div id="editScheduleRows"></div>
-  <button id="saveSchedule">💾 Tallenna lukujärjestys</button>
-</div>
-
-        
-                <div class="setting-group">
-                    <label for="themeSelect">Teema:</label>
-                    <select id="themeSelect">
-                        <option value="light">Vaalea</option>
-                        <option value="dark">Tumma</option>
-                    </select>
+        <!-- Omat järjestykset -->
+        <section class="quick-schedule-section" aria-labelledby="quick-schedule-heading">
+            <h3 id="quick-schedule-heading">Omat järjestykset</h3>
+            <div class="quick-schedule-bar">
+                <div class="schedule-controls">
+                    <button onclick="savePeriodSchedule(currentScheduleSlot)" class="save-schedule-btn">
+                        <i class="fas fa-save" aria-hidden="true"></i> Tallenna nykyinen
+                    </button>
                 </div>
-        
-                <div class="setting-group">
-                    <label for="fontSelect">Fontti:</label>
-                    <select id="fontSelect">
-                        <option value="Poppins">Poppins</option>
-                        <option value="Roboto">Roboto</option>
-                        <option value="Comic Sans MS">Comic Sans MS 😎</option>
-                    </select>
-                    <label for="fontSize">Fonttikoko:</label>
-                        <input type="range" id="fontSize" min="12" max="24" value="16">
+                
+                <div class="schedule-slots" role="list" aria-label="Tallennetut järjestykset">
+                    <div class="schedule-slot" data-slot="1" role="listitem" title="Klikkaa ladataaksesi tai tallentaaksesi">
+                        <span>1. periodi</span>
+                        <i class="fas fa-calendar-alt" aria-hidden="true"></i>
+                    </div>
+                    <div class="schedule-slot" data-slot="2" role="listitem" title="Klikkaa ladataaksesi tai tallentaaksesi">
+                        <span>2. periodi</span>
+                        <i class="fas fa-calendar-alt" aria-hidden="true"></i>
+                    </div>
+                    <div class="schedule-slot" data-slot="3" role="listitem" title="Klikkaa ladataaksesi tai tallentaaksesi">
+                        <span>3. periodi</span>
+                        <i class="fas fa-calendar-alt" aria-hidden="true"></i>
+                    </div>
+                    <div class="schedule-slot" data-slot="4" role="listitem" title="Klikkaa ladataaksesi tai tallentaaksesi">
+                        <span>4. periodi</span>
+                        <i class="fas fa-calendar-alt" aria-hidden="true"></i>
+                    </div>
+                    <div class="schedule-slot" data-slot="5" role="listitem" title="Klikkaa ladataaksesi tai tallentaaksesi">
+                        <span>5. periodi</span>
+                        <i class="fas fa-calendar-alt" aria-hidden="true"></i>
+                    </div>
                 </div>
-
-<!-- 🎨 Aineiden värit - paranneltu versio -->
-<h3 id="subjectColorsToggle" style="cursor:pointer; margin-top:1rem;">
-    <i class="fas fa-palette"></i> Aineiden värit
-    <i class="fas fa-chevron-down" id="subjectColorsArrow"></i>
-</h3>
-<div class="setting-group" id="subjectColorsGroup" style="display:none; margin-top:10px;">
-    <div class="subject-colors-scroll">
-        <div id="subjectColorsContainer">
-            <!-- Värit generoidaan automaattisesti JavaScriptillä -->
-        </div>
-    </div>
-    <button id="resetColors">🔄 Palauta oletusvärit</button>
-</div>
-
-                <div class="setting-group" id="subjectColorsGroup" style="display:none; margin-top:10px;">
-                    <label>Matematiikka: <input type="color" id="color-math" value="#007bff"></label>
-                     <label>Äidinkieli: <input type="color" id="color-finnish" value="#ff4081"></label>
-                    <label>Englanti: <input type="color" id="color-english" value="#00c853"></label>
-                    <label>Maantieto: <input type="color" id="color-geography" value="#ffc107"></label>
-                    <label>Fysiikka: <input type="color" id="color-physics" value="#9c27b0"></label>
-                    <label>Liikunta: <input type="color" id="color-sports" value="#ff5722"></label>
-                    <label>Uskonto: <input type="color" id="color-religion" value="#2196f3"></label>
-                    <label>Tapahtumat: <input type="color" id="color-event" value="#26c6da"></label>
+                
+                <div class="keyboard-shortcuts" aria-label="Pikanäppäimet">
+                    Pikanäppäimet: Ctrl+1, Ctrl+2, Ctrl+3
                 </div>
-
-                <!-- 🍽 Ruokalista -->
-                <h3 id="mealsToggle" style="cursor:pointer; margin-top:1rem;">
-                    <i class="fas fa-utensils"></i> Ruokalista
-                    <i class="fas fa-chevron-down" id="mealsArrow"></i>
-                </h3>
-                <div class="setting-group" id="mealsGroup" style="display:none; margin-top:10px;">
-                    <label>Maanantai: <input type="text" id="meal-mon"></label>
-                    <label>Tiistai: <input type="text" id="meal-tue"></label>
-                    <label>Keskiviikko: <input type="text" id="meal-wed"></label>
-                    <label>Torstai: <input type="text" id="meal-thu"></label>
-                    <label>Perjantai: <input type="text" id="meal-fri"></label>
-                    <button id="saveMeals">Tallenna</button>
+                
+                <div class="context-menu-hint">
+                    <i class="fas fa-mouse" aria-hidden="true"></i> Hiiren oikealla painikkeella enemmän vaihtoehtoja
                 </div>
             </div>
+        </section>
+
+        <section class="exam-week-section" aria-labelledby="exam-week-heading">
+    <h3 id="exam-week-heading">📅 Koeviikko</h3>
+    <div class="exam-week-controls">
+        <div class="exam-week-toggle">
+            <label class="toggle-switch">
+                <input type="checkbox" id="examWeekToggle">
+                <span class="slider"></span>
+            </label>
+            <span id="examWeekStatus">Ei koeviikkoa</span>
         </div>
+        
+        <div class="exam-week-dates" id="examWeekDates" style="display: none;">
+            <label for="examWeekStart">Alkaa:</label>
+            <input type="date" id="examWeekStart">
+            <label for="examWeekEnd">Päättyy:</label>
+            <input type="date" id="examWeekEnd">
+            <button onclick="saveExamWeek()" class="save-exam-week-btn">
+                <i class="fas fa-save"></i> Tallenna
+            </button>
+        </div>
+        
+        <div class="exam-week-info" id="examWeekInfo">
+            <!-- Koeviikon tiedot tulevat tähän -->
+        </div>
+    </div>
+</section>
 
-        <div id="toast" class="toast">Ruokalista tallennettu!</div>
+        <!-- Opiskelutyökalut -->
+        <section class="tools-section collapsed" aria-labelledby="tools-heading">
+    <div class="tools-header" onclick="toggleToolsSection()">
+        <div class="tools-title">
+            <div class="title-icon" aria-hidden="true">🎯</div>
+            <h3 id="tools-heading">Opiskelutyökalut</h3>
+            <i class="fas fa-chevron-down tools-toggle-icon"></i>
+        </div>
+        <div class="tools-stats">
+            <div class="stat-pill">
+                <span class="stat-number" id="totalTasks">0</span>
+                <span class="stat-label">Aktiivista</span>
+            </div>
+        </div>
+    </div>
+            <div class="tools-content" style="display: none;">
+        <!-- Siirrä koko tools-grid tähän -->
+            <div class="tools-grid" role="list" aria-label="Opiskelutyökalut">
+                <!-- Kotitehtävät kortti -->
+                <div class="tool-card homework-card" role="listitem" onclick="showHomeworkManager()" tabindex="0">
+                    <div class="card-gradient" aria-hidden="true"></div>
+                    <div class="card-content">
+                        <div class="tool-header">
+                            <div class="tool-icon">
+                                <div class="icon-wrapper" aria-hidden="true">
+                                    📝
+                                </div>
+                            </div>
+                            <div class="tool-badge" id="homeworkBadge" aria-live="polite">
+                                <span id="homeworkBadgeCount">0</span>
+                            </div>
+                        </div>
+                        <div class="tool-info">
+                            <h4>Kotitehtävät</h4>
+                            <p id="homeworkCounter">0 aktiivista tehtävää</p>
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="homeworkProgress" style="width: 0%" aria-hidden="true"></div>
+                            </div>
+                            <div class="progress-text" id="homeworkProgressText">0% valmiina</div>
+                        </div>
+                        <div class="tool-footer">
+                            <span class="due-soon" id="homeworkDueSoon">0 määräaikana</span>
+                            <div class="arrow-icon" aria-hidden="true">→</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                
+                <!-- Koetentsejä kortti -->
+                <div class="tool-card exam-card" role="listitem" onclick="showExamTracker()" tabindex="0">
+                    <div class="card-gradient" aria-hidden="true"></div>
+                    <div class="card-content">
+                        <div class="tool-header">
+                            <div class="tool-icon">
+                                <div class="icon-wrapper" aria-hidden="true">
+                                    📅
+                                </div>
+                            </div>
+                            <div class="tool-badge" id="examBadge" aria-live="polite">
+                                <span id="examBadgeCount">0</span>
+                            </div>
+                        </div>
+                        <div class="tool-info">
+                            <h4>Kokeet</h4>
+                            <p id="examCounter">0 tulossa</p>
+                        </div>
+                        <div class="exam-stats">
+                            <div class="exam-stat">
+                                <span class="stat-value" id="nextExamDays">-</span>
+                                <span class="stat-label">pv seuraavaan</span>
+                            </div>
+                            <div class="exam-stat">
+                                <span class="stat-value" id="importantExamsCount">0</span>
+                                <span class="stat-label">tärkeää</span>
+                            </div>
+                        </div>
+                        <div class="tool-footer">
+                            <span class="upcoming" id="upcomingExamsCount">0 Koetta</span>
+                            <div class="arrow-icon" aria-hidden="true">→</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Arvosanat kortti -->
+                <div class="tool-card grade-card" role="listitem" onclick="showGradeTracker()" tabindex="0">
+                    <div class="card-gradient" aria-hidden="true"></div>
+                    <div class="card-content">
+                        <div class="tool-header">
+                            <div class="tool-icon">
+                                <div class="icon-wrapper" aria-hidden="true">
+                                    📊
+                                </div>
+                            </div>
+                            <div class="grade-average" id="gradeAverage">-.-</div>
+                        </div>
+                        <div class="tool-info">
+                            <h4>Arvosanat</h4>
+                            <p id="gradeCounter">0 arvosanaa tallennettuna</p>
+                        </div>
+                        <div class="grade-stats">
+                            <div class="grade-stat">
+                                <span class="stat-value" id="totalGrades">0</span>
+                                <span class="stat-label">yhteensä</span>
+                            </div>
+                            <div class="grade-stat">
+                                <span class="stat-value" id="bestGrade">-</span>
+                                <span class="stat-label">paras</span>
+                            </div>
+                        </div>
+                        <div class="tool-footer">
+                            <span class="subjects" id="gradeSubjects">0 ainetta</span>
+                            <div class="arrow-icon" aria-hidden="true">→</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Muistiinpanot kortti -->
+                <div class="tool-card notes-card" role="listitem" onclick="showNotesManager()" tabindex="0">
+                    <div class="card-gradient" aria-hidden="true"></div>
+                    <div class="card-content">
+                        <div class="tool-header">
+                            <div class="tool-icon">
+                                <div class="icon-wrapper" aria-hidden="true">
+                                    📓
+                                </div>
+                            </div>
+                            <div class="notes-count" id="notesCount">0</div>
+                        </div>
+                        <div class="tool-info">
+                            <h4>Muistiinpanot</h4>
+                            <p id="notesCounter">0 muistiinpanoa</p>
+                        </div>
+                        <div class="notes-preview">
+                            <div class="note-category">
+                                <span class="category-dot homework-dot" aria-hidden="true"></span>
+                                <span class="category-count" id="notesHomework">0</span>
+                            </div>
+                            <div class="note-category">
+                                <span class="category-dot exam-dot" aria-hidden="true"></span>
+                                <span class="category-count" id="notesExam">0</span>
+                            </div>
+                            <div class="note-category">
+                                <span class="category-dot reminder-dot" aria-hidden="true"></span>
+                                <span class="category-count" id="notesReminder">0</span>
+                            </div>
+                        </div>
+                        <div class="tool-footer">
+                            <span class="recent-notes" id="recentNotes">Ei uusia</span>
+                            <div class="arrow-icon" aria-hidden="true">→</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pikalinkit -->
+            <div class="quick-actions" role="toolbar" aria-label="Pikatoiminnot">
+                <button class="quick-action-btn" onclick="addQuickHomework()">
+                    <span class="action-icon" aria-hidden="true">➕</span>
+                    <span>Pikatehtävä</span>
+                </button>
+                <button class="quick-action-btn" onclick="addQuickExam()">
+                    <span class="action-icon" aria-hidden="true">⏰</span>
+                    <span>Pikakoe</span>
+                </button>
+                <button class="quick-action-btn" onclick="addQuickNote()">
+                    <span class="action-icon" aria-hidden="true">📋</span>
+                    <span>Pikamuistiinpano</span>
+                </button>
+            </div>
+        </section>
 
-
-<div class="timetable" id="timetable"></div>
-
-
-        <div class="minigame">
-            <h3>🎮 pelit</h3>
-            <div class="game-grid">
-                <div class="game-card" onclick="openInternalGame('rps')">
-                    <span class="icon">✂️</span>
+        <!-- Pikatyökalut ja pelit -->
+        <section class="minigame-section" aria-labelledby="minigame-heading">
+            <h3 id="minigame-heading">🎮 Pikatyökalut</h3>
+            <div class="game-grid" role="list" aria-label="Pikatyökalut ja pelit">
+                <div class="game-card" role="listitem" onclick="openInternalGame('rps')" tabindex="0">
+                    <span class="icon" aria-hidden="true">✂️</span>
                     <p>Kivi-paperi-sakset</p>
                 </div>
-                <div class="game-card" onclick="openExternalGame('https://play2048.co/')">
-                    <span class="icon">🔢</span>
+                <div class="game-card" role="listitem" onclick="openExternalGame('https://play2048.co/')" tabindex="0">
+                    <span class="icon" aria-hidden="true">🔢</span>
                     <p>2048</p>
                 </div>
-                <div class="game-card" onclick="openExternalGame('https://sanuli.fi/')">
-                    <span class="icon">🔤</span>
+                <div class="game-card" role="listitem" onclick="openExternalGame('https://sanuli.fi/')" tabindex="0">
+                    <span class="icon" aria-hidden="true">🔤</span>
                     <p>Sanuli</p>
                 </div>
-                <div class="game-card" onclick="openExternalGame('https://playsnake.org/')">
-                    <span class="icon">🐍</span>
+                <div class="game-card" role="listitem" onclick="openExternalGame('https://playsnake.org/')" tabindex="0">
+                    <span class="icon" aria-hidden="true">🐍</span>
                     <p>Snake</p>
                 </div>
-                <div class="game-card" onclick="openExternalGame('https://tetris.com/play-tetris')">
-                    <span class="icon">🟦</span>
+                <div class="game-card" role="listitem" onclick="openExternalGame('https://tetris.com/play-tetris')" tabindex="0">
+                    <span class="icon" aria-hidden="true">🟦</span>
                     <p>Tetris</p>
                 </div>
-                <div class="game-card" onclick="openExternalGame('https://www.ponggame.org/')">
-                    <span class="icon">🏓</span>
+                <div class="game-card" role="listitem" onclick="openExternalGame('https://www.ponggame.org/')" tabindex="0">
+                    <span class="icon" aria-hidden="true">🏓</span>
                     <p>Pong</p>
                 </div>
             </div>
 
-        <div id="rpsGame" style="display:none; margin-top:1rem;">
-            <h4>Kivi-paperi-sakset</h4>
-            <div class="choices">
-                <button onclick="startRPS('kivi')">🪨</button>
-                <button onclick="startRPS('paperi')">📄</button>
-                <button onclick="startRPS('sakset')">✂️</button>
+            <div id="rpsGame" style="display:none; margin-top:1rem;" aria-live="polite">
+                <h4>Kivi-paperi-sakset</h4>
+                <div class="choices" role="group" aria-label="Valitse kivi, paperi tai sakset">
+                    <button onclick="startRPS('kivi')" aria-label="Kivi">🪨</button>
+                    <button onclick="startRPS('paperi')" aria-label="Paperi">📄</button>
+                    <button onclick="startRPS('sakset')" aria-label="Sakset">✂️</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+<!-- ⚙️ ASETUKSET-MODAL (paranneltu versio) -->
+<div id="settingsModal" class="settings-modal">
+  <div class="settings-content">
+    <span id="closeSettings" class="close-btn">&times;</span>
+    <h2 style="text-align:center; margin-bottom: 1rem;">Asetukset</h2>
+
+    <!-- Välilehdet -->
+    <div class="settings-tabs">
+      <button class="settings-tab active" data-tab="appearance">
+        <i class="fas fa-paint-brush"></i> Ulkoasu
+      </button>
+      <button class="settings-tab" data-tab="schedule">
+        <i class="fas fa-calendar-alt"></i> Lukujärjestys
+      </button>
+      <button class="settings-tab" data-tab="colors">
+        <i class="fas fa-palette"></i> Ainevärit
+      </button>
+      <button class="settings-tab" data-tab="meals">
+        <i class="fas fa-utensils"></i> Ruokalista
+      </button>
+      <button class="settings-tab" data-tab="events">
+        <i class="fas fa-calendar-plus"></i> Tapahtumat
+      </button>
+      <button class="settings-tab" data-tab="info">
+        <i class="fas fa-info-circle"></i> Tietoja
+      </button>
+    </div>
+
+    <!-- Välilehtien sisältö -->
+    <div class="settings-tab-content active" id="tab-appearance">
+      <div class="setting-group">
+        <label for="themeSelect">Teema</label>
+        <select id="themeSelect">
+          <option value="light">Vaalea</option>
+          <option value="dark">Tumma</option>
+          <option value="auto">Automaattinen</option>
+        </select>
+      </div>
+
+      <div class="setting-group">
+        <label for="fontSelect">Fontti</label>
+        <select id="fontSelect">
+          <option value="Poppins, sans-serif">Poppins</option>
+          <option value="Roboto, sans-serif">Roboto</option>
+          <option value="Open Sans, sans-serif">Open Sans</option>
+          <option value="Montserrat, sans-serif">Montserrat</option>
+          <option value="Comic Sans MS, cursive">Comic Sans MS 😎</option>
+        </select>
+      </div>
+
+      <div class="setting-group">
+        <label for="fontSize">Fonttikoko</label>
+        <input type="range" id="fontSize" min="12" max="22" step="1" value="16">
+        <span id="fontSizeValue">16px</span>
+      </div>
+    </div>
+
+    <div class="settings-tab-content" id="tab-schedule">
+      <h3>Lukujärjestyksen hallinta</h3>
+      
+      <div class="setting-group">
+        <label for="editPeriodSelect">Valitse periodi:</label>
+        <select id="editPeriodSelect">
+          <option value="1">1. periodi</option>
+          <option value="2">2. periodi</option>
+          <option value="3">3. periodi</option>
+          <option value="4">4. periodi</option>
+          <option value="5">5. periodi</option>
+        </select>
+        <span id="editPeriodDates"></span>
+      </div>
+      
+      <div id="editScheduleGroup">
+        <div id="editScheduleRows" class="schedule-rows"></div>
+        <button id="saveSchedule" class="btn">💾 Tallenna lukujärjestys</button>
+      </div>
+      
+      <div class="setting-group" style="margin-top: 1.5rem;">
+        <h4>Jaa ja vie lukujärjestystä</h4>
+        <button id="exportSchedule" class="btn">📤 Vie lukujärjestys</button>
+        <button id="importSchedule" class="btn">📥 Lataa lukujärjestys</button>
+        
+        <div class="import-export-area" style="margin-top: 1rem;">
+          <textarea id="scheduleData" placeholder="Liitä tähän jaettu lukujärjestys..."></textarea>
+          <button id="applyImportedSchedule" class="btn">💾 Käytä tuotua järjestystä</button>
+        </div>
+        <p class="help-text">Voit jakaa lukujärjestystä kopioimalla ja liittämällä koodin</p>
+      </div>
+    </div>
+
+    <div class="settings-tab-content" id="tab-colors">
+      <h3>Aineiden värit</h3>
+      <div id="subjectColorsGroup" class="subject-colors-scroll">
+        <div id="subjectColorsContainer">
+          <!-- Väriasetukset renderöidään JS:llä -->
+        </div>
+      </div>
+      <button id="resetColors" class="btn">🔄 Palauta oletusvärit</button>
+    </div>
+
+    <div class="settings-tab-content" id="tab-meals">
+      <h3>Ruokalista</h3>
+      <div id="mealsGroup">
+        <div class="setting-group">
+          <label for="meal-mon">Maanantai:</label>
+          <input type="text" id="meal-mon" placeholder="Esim. Kalakeitto">
+        </div>
+        <div class="setting-group">
+          <label for="meal-tue">Tiistai:</label>
+          <input type="text" id="meal-tue">
+        </div>
+        <div class="setting-group">
+          <label for="meal-wed">Keskiviikko:</label>
+          <input type="text" id="meal-wed">
+        </div>
+        <div class="setting-group">
+          <label for="meal-thu">Torstai:</label>
+          <input type="text" id="meal-thu">
+        </div>
+        <div class="setting-group">
+          <label for="meal-fri">Perjantai:</label>
+          <input type="text" id="meal-fri">
+        </div>
+      </div>
+      <button id="saveMeals" class="btn">💾 Tallenna ruokalista</button>
+    </div>
+
+    <div class="settings-tab-content" id="tab-events">
+      <h3>Yksittäiset tapahtumat</h3>
+      <div class="event-form-grid">
+        <div class="form-group">
+          <label for="eventDay">Päivä:</label>
+          <select id="eventDay" class="form-control">
+            <option value="1">Maanantai</option>
+            <option value="2">Tiistai</option>
+            <option value="3">Keskiviikko</option>
+            <option value="4">Torstai</option>
+            <option value="5">Perjantai</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="eventTime">Kellonaika:</label>
+          <input type="time" id="eventTime" class="form-control">
+        </div>
+        
+        <div class="form-group">
+          <label for="eventDuration">Kesto (min):</label>
+          <input type="number" id="eventDuration" value="45" min="1" max="180" class="form-control">
+        </div>
+        
+        <div class="form-group full-width">
+          <label for="eventName">Tapahtuman nimi:</label>
+          <input type="text" id="eventName" placeholder="Esim. Opotunti, Koe, Tapahtuma..." class="form-control">
+        </div>
+        
+        <div class="form-group full-width">
+          <label for="eventRoom">Sali/Luokka (valinnainen):</label>
+          <input type="text" id="eventRoom" placeholder="Esim. A1, Auditorio..." class="form-control">
+        </div>
+      </div>
+      
+      <button id="addEventBtn" class="btn">
+        <i class="fas fa-calendar-plus"></i> Lisää tapahtuma lukujärjestykseen
+      </button>
+      
+      <div class="event-help">
+        <small><i class="fas fa-info-circle"></i> Tapahtumat näkyvät erikseen korostettuna lukujärjestyksessä</small>
+      </div>
+    </div>
+
+    <div class="settings-tab-content" id="tab-info">
+      <h3>Tietoja sovelluksesta</h3>
+      <p><strong>Rauman lukion lukujärjestyssovellus</strong></p>
+      <p>Versio 2.0 – kehitetty opiskelijoiden arkea helpottamaan 💪</p>
+      <p>© 2025</p>
+    </div>
+  </div>
+</div>
+
+    <!-- Modaalit eri työkaluille -->
+    <!-- Kotitehtävien modaali -->
+    <div id="homeworkModal" class="modal" role="dialog" aria-labelledby="homework-heading" aria-hidden="true">
+        <div class="modal-content homework-modal">
+            <div class="modal-header">
+                <h2 id="homework-heading">📝 Kotitehtävien hallinta</h2>
+                <button class="close-btn" onclick="closeHomeworkManager()" aria-label="Sulje kotitehtävien hallinta">&times;</button>
             </div>
             
-        <!-- KPS Popup-arvonta -->
-            <div id="rpsPopup" class="rps-popup">
-            <div class="rps-popup-content">
-                <div id="rpsAnimation">❔</div>
-                <p id="rpsResult">Valitse ja pelaa!</p>
-                <button onclick="closeRpsPopup()">Sulje</button>
+            <div class="modal-body">
+                <div class="homework-input">
+                    <input type="text" id="homeworkSubject" placeholder="Aine (esim. Matematiikka)" list="subjectList">
+                    <input type="text" id="homeworkTask" placeholder="Tehtäväkuvaus">
+                    <input type="date" id="homeworkDueDate">
+                    <select id="homeworkPriority">
+                        <option value="low">Matala tärkeys</option>
+                        <option value="medium" selected>Keskitaso</option>
+                        <option value="high">Korkea tärkeys</option>
+                    </select>
+                    <button onclick="addHomework()" class="add-btn">
+                        <i class="fas fa-plus" aria-hidden="true"></i> Lisää tehtävä
+                    </button>
+                </div>
+                
+                <div class="homework-filters" role="toolbar" aria-label="Suodattimet kotitehtäville">
+                    <button class="filter-btn active" onclick="filterHomework('all')">Kaikki</button>
+                    <button class="filter-btn" onclick="filterHomework('active')">Aktiiviset</button>
+                    <button class="filter-btn" onclick="filterHomework('completed')">Tehdyt</button>
+                    <button class="filter-btn" onclick="filterHomework('overdue')">Myöhässä</button>
+                </div>
+                
+                <div id="homeworkList" class="homework-list" role="list" aria-label="Kotitehtävät"></div>
             </div>
         </div>
     </div>
-</div>
 
+    <!-- Koetentsejen modaali -->
+    <div id="examModal" class="modal" role="dialog" aria-labelledby="exam-heading" aria-hidden="true">
+        <div class="modal-content exam-modal">
+            <div class="modal-header">
+                <h2 id="exam-heading">📅 Kokeiden seuraaja</h2>
+                <button class="close-btn" onclick="closeExamTracker()" aria-label="Sulje kokeiden seuraaja">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="exam-input">
+                    <input type="text" id="examSubject" placeholder="Aine" list="subjectList">
+                    <input type="date" id="examDate">
+                    <input type="text" id="examTopic" placeholder="Kokeen aihe/alue">
+                    <select id="examImportance">
+                        <option value="normal">Normaali</option>
+                        <option value="important">Tärkeä</option>
+                        <option value="critical">Erittäin tärkeä</option>
+                    </select>
+                    <button onclick="addExam()" class="add-btn">
+                        <i class="fas fa-plus" aria-hidden="true"></i> Lisää Koe
+                    </button>
+                </div>
+                
+                <div class="exam-stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="upcomingExams">0</div>
+                        <div class="stat-label">Tulossa</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="importantExams">0</div>
+                        <div class="stat-label">Tärkeitä</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="daysToNextExam">-</div>
+                        <div class="stat-label">Päivää seuraavaan</div>
+                    </div>
+                </div>
+                
+                <div id="examList" class="exam-list" role="list" aria-label="Kokeet"></div>
+            </div>
+        </div>
+    </div>
 
+    <!-- Arvosanojen modaali -->
+    <div id="gradeModal" class="modal" role="dialog" aria-labelledby="grade-heading" aria-hidden="true">
+        <div class="modal-content grade-modal">
+            <div class="modal-header">
+                <h2 id="grade-heading">📊 Arvosanaseuranta</h2>
+                <button class="close-btn" onclick="closeGradeTracker()" aria-label="Sulje arvosanaseuranta">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="grade-input">
+                    <input type="text" id="gradeSubject" placeholder="Aine" list="subjectList">
+                    <input type="number" id="gradeValue" min="4" max="10" step="0.5" placeholder="Arvosana (4-10)">
+                    <input type="text" id="gradeDescription" placeholder="Kuvaus (valinnainen)">
+                    <button onclick="addGrade()" class="add-btn">
+                        <i class="fas fa-plus" aria-hidden="true"></i> Lisää arvosana
+                    </button>
+                </div>
+                
+                <div class="grade-stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="averageGrade">-</div>
+                        <div class="stat-label">Keskiarvo</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalGrades">0</div>
+                        <div class="stat-label">Arvosanoja</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="bestSubject">-</div>
+                        <div class="stat-label">Paras aine</div>
+                    </div>
+                </div>
+                
+                <div id="gradeList" class="grade-list" role="list" aria-label="Arvosanat"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Muistiinpanojen modaali -->
+    <div id="notesModal" class="modal" role="dialog" aria-labelledby="notes-heading" aria-hidden="true">
+        <div class="modal-content notes-modal">
+            <div class="modal-header">
+                <h2 id="notes-heading">📓 Muistiinpanot</h2>
+                <button class="close-btn" onclick="closeNotesManager()" aria-label="Sulje muistiinpanot">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="notes-input">
+                    <input type="text" id="noteTitle" placeholder="Otsikko">
+                    <textarea id="noteContent" placeholder="Kirjoita muistiinpanosi tähän..."></textarea>
+                    <select id="noteCategory">
+                        <option value="general">Yleinen</option>
+                        <option value="homework">Kotitehtävät</option>
+                        <option value="exam">Kokeet</option>
+                        <option value="reminder">Muistutus</option>
+                    </select>
+                    <button onclick="addNote()" class="add-btn">
+                        <i class="fas fa-plus" aria-hidden="true"></i> Lisää muistiinpano
+                    </button>
+                </div>
+                
+                <div id="notesList" class="notes-list" role="list" aria-label="Muistiinpanot"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPS Popup-arvonta -->
+    <div id="rpsPopup" class="rps-popup" role="dialog" aria-labelledby="rps-result" aria-hidden="true">
+        <div class="rps-popup-content">
+            <div id="rpsAnimation" aria-hidden="true">❔</div>
+            <p id="rpsResult">Valitse ja pelaa!</p>
+            <button onclick="closeRpsPopup()">Sulje</button>
+        </div>
+    </div>
+
+    <!-- Datalist aineille -->
+    <datalist id="subjectList">
+        <option value="Matematiikka">
+        <option value="Äidinkieli">
+        <option value="Englanti">
+        <option value="Ruotsi">
+        <option value="Fysiikka">
+        <option value="Kemia">
+        <option value="Biologia">
+        <option value="Maantieto">
+        <option value="Historia">
+        <option value="Yhteiskuntaoppi">
+        <option value="Filosofia">
+        <option value="Psykologia">
+        <option value="Uskonto">
+        <option value="Liikunta">
+        <option value="Musiikki">
+        <option value="Kuvataide">
+        <option value="Käsityö">
+    </datalist>
+
+    <!-- Toast-ilmoitukset -->
+    <div id="toast" class="toast" role="alert" aria-live="polite">Ruokalista tallennettu!</div>
 
     <!-- Bottom navigaatio -->
-     <nav class="bottom-nav">
+    <nav class="bottom-nav" aria-label="Päänavigaatio">
         <div class="nav-items">
-            <a href="#" class="nav-item active">
-                <i class="fas fa-calendar-alt"></i>
+            <a href="#" class="nav-item active" aria-current="page">
+                <i class="fas fa-calendar-alt" aria-hidden="true"></i>
                 <span>Lukujärjestys</span>
             </a>
             <a href="#" id="settingsBtn" class="nav-item">
-                <i class="fas fa-cog"></i>
+                <i class="fas fa-cog" aria-hidden="true"></i>
                 <span>Asetukset</span>
+            </a>
+            <a href="#" class="nav-item" onclick="showHomeworkManager()">
+                <i class="fas fa-tasks" aria-hidden="true"></i>
+                <span>Tehtävät</span>
             </a>
         </div>
     </nav>
@@ -195,5 +746,3 @@
     <script src="script.js"></script>
 </body>
 </html>
-
-

@@ -60,7 +60,7 @@ button:hover, .btn:hover {
 /* 🍞 Toast-ilmoitus */
 .toast {
   position: fixed;
-  bottom: 30px;
+  bottom: 80px;
   right: 30px;
   background: var(--accent-color);
   padding: 12px 20px;
@@ -68,7 +68,7 @@ button:hover, .btn:hover {
   font-weight: 600;
   font-size: 15px;
   opacity: 0;
-  transform: translateY(40px);
+  transform: translateY(100px);
   transition: all 1s ease;
   z-index: 1000;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
@@ -161,6 +161,7 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: 2rem 1rem;
+    padding-bottom: 80px; /* TILAA BOTTOM-NAVILLE */
     opacity: 0;
     animation: fadeIn 0.5s ease-out 3s forwards;
 }
@@ -228,26 +229,234 @@ header {
     align-items: center;
 }
 
-/* Asetukset-modal */
 .settings-modal {
     display: none;
     position: fixed;
-    z-index: 1000;
+    z-index: 1500;
     left: 0; top: 0;
     width: 100%; height: 100%;
-    background: rgba(0,0,0,0.6);
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(6px);
     justify-content: center;
     align-items: center;
+    animation: fadeIn 0.3s ease;
 }
 
 .settings-content {
-    background: var(--bg-color, #fff);
-    color: var(--text-color, #000);
-    padding: 20px;
-    border-radius: 12px;
-    min-width: 300px;
-    max-width: 90%;
-    font-family: inherit;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 20px;
+    padding: 1.5rem; /* Vähennetty paddingia */
+    width: min(90%, 420px);
+    max-height: 85vh; /* Rajataan korkeutta */
+    overflow: hidden; /* Piilotetaa ylivuoto */
+    color: #fff;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    animation: slideUp 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+
+body.dark-theme .settings-content {
+    background: rgba(30,30,30,0.7);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Asetukset - välilehdet */
+.settings-tabs {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 1.5rem;
+  padding: 0.8rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding-bottom: 0.5rem;
+}
+
+.settings-tab {
+  flex: 1 1 120px;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  padding: 0.8rem 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  transition: all 0.2s ease;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.settings-tab.active {
+  background: var(--accent-color);
+  color: #000;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+}
+
+.settings-tab:hover:not(.active) {
+  background: rgba(255,255,255,0.15);
+  transform: translateY(-2px);
+}
+
+/* Skrollipalkin tyylit */
+.settings-tab-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.settings-tab-content::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+}
+
+.settings-tab-content::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 3px;
+}
+
+.settings-tab-content::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--accent-color) 65%, black 35%);
+    border-radius: 3px;
+}
+
+
+.settings-tab-content {
+  display: none;
+  animation: fadeIn 0.3s ease;
+  flex: 1;
+    overflow-y: auto;
+    max-height: 60vh; /* Rajataan sisällön korkeus */
+    padding-right: 5px;
+}
+
+.settings-tab-content.active {
+  display: block;
+}
+
+/* Asetusryhmät */
+.setting-group {
+  margin-bottom: 1.2rem;
+  padding: 1rem;
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.setting-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--light);
+}
+
+.setting-group select,
+.setting-group input[type="text"],
+.setting-group input[type="number"],
+.setting-group input[type="time"],
+.setting-group input[type="date"] {
+  width: 100%;
+  padding: 0.8rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.1);
+  color: var(--light);
+  font-family: inherit;
+  transition: all 0.3s ease;
+}
+
+.setting-group select:focus,
+.setting-group input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+}
+
+/* Range input */
+.setting-group input[type="range"] {
+  width: 100%;
+  margin: 0.5rem 0;
+}
+
+#fontSizeValue {
+  margin-left: 1rem;
+  font-weight: 600;
+  color: var(--accent-color);
+}
+
+/* Napit */
+.btn {
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+  width: auto;
+}
+
+.btn:hover {
+  background: color-mix(in srgb, var(--accent-color) 85%, black 15%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+}
+
+/* Tumma teema säätöjä */
+body.dark-theme .setting-group {
+  background: rgba(30,30,30,0.6);
+  border-color: rgba(255,255,255,0.05);
+}
+
+body.dark-theme .settings-tab {
+  background: rgba(255,255,255,0.05);
+}
+
+body.dark-theme .settings-tab.active {
+  background: var(--accent-color);
+}
+
+/* Responsiivisuus */
+@media (max-width: 768px) {
+  .settings-tabs {
+    flex-direction: column;
+  }
+  
+  .settings-tab {
+    flex: none;
+    justify-content: flex-start;
+    padding: 1rem;
+  }
+  
+  .settings-content {
+    width: 95%;
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .settings-tab {
+    font-size: 0.8rem;
+    padding: 0.8rem 0.4rem;
+  }
+  
+  .settings-tab i {
+    font-size: 0.9rem;
+  }
 }
 
 /* 📚 Lukujärjestyksen muokkausalue */
@@ -257,10 +466,13 @@ header {
   padding: 1rem;
   border-radius: 12px;
   backdrop-filter: blur(8px);
-  max-height: 400px;
-  overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--accent-color) var(--row-bg);
+  flex: 1;
+    min-height: 200px;
+    max-height: 300px; /* Rajataan korkeutta */
+    overflow-y: auto;
+    border: 1px solid var(--input-border);
 }
 
 /* Tyylikäs skrollipalkki Chromessa ja Edge:ssä */
@@ -856,7 +1068,6 @@ body.dark-theme .settings-content {
     animation: pulse 2s infinite;
 }
 
-/* Bottom nav */
 .bottom-nav {
     position: fixed;
     bottom: 0;
@@ -867,7 +1078,11 @@ body.dark-theme .settings-content {
     padding: 0.8rem 0;
     display: flex;
     justify-content: center;
-    z-index: 100;
+    z-index: 1000;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    
+    /* Varmista että tämä on oma alueensa */
+    box-sizing: border-box;
 }
 
 .nav-items {
@@ -963,4 +1178,1908 @@ body.dark-theme .settings-content {
     .nav-items {
         gap: 1rem;
     }
+}
+
+/* Lisätään uusia tyylejä styles.css tiedostoon */
+
+/* Periodivalitsin */
+.period-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 5px;
+}
+
+.period-selector select {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-family: inherit;
+}
+
+.period-selector select option {
+    background: #4361ee;
+    color: white;
+}
+
+#periodDates {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+/* Tilastopalkki */
+.stats-bar {
+    display: flex;
+    justify-content: space-between;
+    background: rgba(255,255,255,0.08);
+    padding: 12px 20px;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    backdrop-filter: blur(10px);
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.stat-item i {
+    color: var(--accent-color);
+}
+
+/* Pikalatauspalkki omille järjestyksille */
+.quick-schedule-bar {
+    background: rgba(255,255,255,0.05);
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    backdrop-filter: blur(5px);
+}
+
+.quick-schedule-bar h3 {
+    margin-bottom: 10px;
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+.schedule-slots {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.schedule-slot {
+    flex: 1;
+    min-width: 120px;
+    background: rgba(255,255,255,0.1);
+    padding: 12px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.schedule-slot:hover {
+    background: rgba(255,255,255,0.15);
+    transform: translateY(-2px);
+}
+
+.schedule-slot.active {
+    border-color: var(--accent-color);
+    background: rgba(72, 149, 239, 0.2);
+}
+
+.new-slot {
+    background: rgba(72, 149, 239, 0.3) !important;
+    justify-content: center;
+    gap: 8px;
+}
+
+.new-slot:hover {
+    background: rgba(72, 149, 239, 0.4) !important;
+}
+
+/* Modal-tyylit */
+.modal {
+    position: fixed;
+    z-index: 500;
+    left: 0; 
+    top: 0;
+    width: 100%; 
+    height: 100%; /* Ei 100vh, vaan 100% */
+    background: rgba(0,0,0,0.6);
+    justify-content: center;
+    align-items: center;
+    overflow: auto;
+}
+
+.modal-content {
+    background: var(--bg-color);
+    color: var(--text-color);
+    padding: 25px;
+    border-radius: 15px;
+    max-width: 500px;
+    max-height: calc(100vh - 100px); /* Jätä tilaa ylä- ja alareunoille */
+    margin: 50px auto; /* Keskitä modaali */
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+/* Jakamis- ja vientialue */
+.import-export-area {
+    margin-top: 15px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.import-export-area::-webkit-scrollbar {
+    width: 6px;
+}
+
+.import-export-area::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+}
+
+.import-export-area::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 3px;
+
+}.import-export-area::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--accent-color) 85%, black 35%);
+}
+
+#scheduleData {
+    width: 100%;
+    height: 100px;
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    color: var(--text-color);
+    font-family: monospace;
+    resize: vertical;
+}
+
+.help-text {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    margin-top: 8px;
+}
+
+/* Kotitehtävien ja koetentsejen tyylit */
+.homework-input, .exam-input {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.homework-input input, .exam-input input {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    color: var(--text-color);
+}
+
+.homework-list, .exam-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.homework-item, .exam-item {
+    background: var(--row-bg);
+    padding: 12px;
+    border-radius: 8px;
+    border-left: 4px solid var(--accent-color);
+}
+
+.homework-item.due-soon {
+    border-left-color: #ff9800;
+    animation: pulse 2s infinite;
+}
+
+.homework-item.overdue {
+    border-left-color: #f44336;
+    animation: pulse 1s infinite;
+}
+
+.exam-item.soon {
+    border-left-color: #ff9800;
+}
+
+.homework-actions, .exam-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.homework-actions button, .exam-actions button {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+}
+
+/* Päivämäärän tyylit */
+.due-date, .exam-date {
+    font-size: 0.8rem;
+    opacity: 0.8;
+    margin-top: 4px;
+}
+
+/* Progress bar tehtäville */
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--input-bg);
+    border-radius: 3px;
+    margin-top: 8px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--accent-color);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+/* Dark theme säätöjä */
+body.dark-theme .schedule-slot {
+    background: rgba(255,255,255,0.05);
+}
+
+body.dark-theme .stats-bar {
+    background: rgba(255,255,255,0.05);
+}
+
+/* Responsiivisuus */
+@media (max-width: 768px) {
+    .stats-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .schedule-slots {
+        flex-direction: column;
+    }
+    
+    .schedule-slot {
+        min-width: auto;
+    }
+    
+    .homework-input, .exam-input {
+        flex-direction: column;
+    }
+}
+
+/* Animaatio uusille elementeille */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.stats-bar, .quick-schedule-bar, .modal-content {
+    animation: slideIn 0.5s ease-out;
+}
+
+/* Lisää styles.css tiedostoon */
+
+/* Jakamis- ja vientiosion tyylit */
+#importSchedule, #exportSchedule, #applyImportedSchedule {
+    width: 100%;
+    margin: 5px 0;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    background: var(--accent-color);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#importSchedule:hover, #exportSchedule:hover, #applyImportedSchedule:hover {
+    background: color-mix(in srgb, var(--accent-color) 85%, black 15%);
+    transform: translateY(-2px);
+}
+
+.import-export-area {
+    margin-top: 15px;
+    padding: 15px;
+    background: var(--row-bg);
+    border-radius: 10px;
+    border: 1px solid var(--input-border);
+}
+
+#scheduleData {
+    width: 100%;
+    height: 120px;
+    margin: 10px 0;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    color: var(--text-color);
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    resize: vertical;
+    line-height: 1.4;
+}
+
+.help-text {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    margin-top: 8px;
+    text-align: center;
+    font-style: italic;
+}
+
+/* Korjataan myös muiden osioiden toggle-toiminnot varmuuden vuoksi */
+#shareScheduleToggle, #subjectColorsToggle, #mealsToggle, #editScheduleToggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--input-border);
+    margin-bottom: 10px;
+}
+
+#shareScheduleToggle:hover, #subjectColorsToggle:hover, #mealsToggle:hover, #editScheduleToggle:hover {
+    color: var(--accent-color);
+    cursor: pointer;
+}
+
+/* Varmistetaan, että nuolet näkyvät oikein */
+#shareScheduleArrow, #subjectColorsArrow, #mealsArrow, #editScheduleArrow {
+    transition: transform 0.3s ease;
+    font-size: 0.9rem;
+    opacity: 0.7;
+}
+
+/* Väripyörän tyylit */
+.color-picker-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+
+.color-picker-content {
+    background: var(--bg-color);
+    padding: 20px;
+    border-radius: 12px;
+    max-width: 300px;
+    width: 90%;
+}
+
+.color-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.color-option {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.color-option:hover {
+    transform: scale(1.1);
+    border-color: white;
+}
+
+/* Parannellut slot-tyylit */
+.schedule-slot {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.schedule-slot.active {
+    border: 2px solid var(--accent-color) !important;
+    background: rgba(72, 149, 239, 0.2) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(72, 149, 239, 0.3);
+}
+
+.schedule-slot.saved {
+    border-left: 4px solid #4CAF50;
+}
+
+.schedule-slot.empty {
+    border-left: 4px solid #ff9800;
+}
+
+/* Tooltip-tyylit */
+.schedule-slot::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 1000;
+}
+
+.schedule-slot:hover::after {
+    opacity: 1;
+}
+
+/* Pikanäppäin-info */
+.keyboard-shortcuts {
+    margin-top: 10px;
+    font-size: 0.8rem;
+    opacity: 0.7;
+    text-align: center;
+}
+
+/* Tools Section - Modern Design */
+.tools-section {
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+    padding: 1.5rem;
+    border-radius: 20px;
+    margin: 2rem 0;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.tools-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+}
+
+.tools-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.tools-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.title-icon {
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, var(--accent-color), #ff6b6b);
+    border-radius: 12px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tools-title h3 {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #fff, #f8f9fa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.tools-stats {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.stat-pill {
+    background: rgba(255,255,255,0.1);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    backdrop-filter: blur(10px);
+}
+
+.stat-number {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--accent-color);
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+/* Tools Grid */
+.tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Tool Cards */
+.tool-card {
+    background: rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+}
+
+.tool-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    border-color: rgba(255,255,255,0.3);
+}
+
+.card-gradient {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent-color), #ff6b6b, #4ecdc4);
+    opacity: 0.8;
+}
+
+.homework-card .card-gradient {
+    background: linear-gradient(90deg, #667eea, #764ba2);
+}
+
+.exam-card .card-gradient {
+    background: linear-gradient(90deg, #f093fb, #f5576c);
+}
+
+.grade-card .card-gradient {
+    background: linear-gradient(90deg, #4facfe, #00f2fe);
+}
+
+.notes-card .card-gradient {
+    background: linear-gradient(90deg, #43e97b, #38f9d7);
+}
+
+.card-content {
+    padding: 1.5rem;
+    position: relative;
+    z-index: 2;
+}
+
+/* Tool Header */
+.tool-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.tool-icon .icon-wrapper {
+    width: 50px;
+    height: 50px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.tool-badge {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    color: white;
+    border-radius: 20px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    min-width: 30px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(255,107,107,0.3);
+}
+
+.grade-average, .notes-count {
+    font-size: 1.4rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #fff, #f8f9fa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Tool Info */
+.tool-info h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--light);
+}
+
+.tool-info p {
+    margin: 0;
+    opacity: 0.8;
+    font-size: 0.9rem;
+}
+
+/* Progress Bar */
+.progress-container {
+    margin: 1rem 0;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 3px;
+    transition: width 0.8s ease;
+    box-shadow: 0 0 10px rgba(102, 126, 234, 0.4);
+}
+
+.progress-text {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    text-align: right;
+}
+
+/* Exam Stats */
+.exam-stats, .grade-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.exam-stat, .grade-stat {
+    text-align: center;
+    background: rgba(255,255,255,0.05);
+    padding: 0.75rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--accent-color);
+    margin-bottom: 0.2rem;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    opacity: 0.8;
+    display: block;
+}
+
+/* Notes Preview */
+.notes-preview {
+    display: flex;
+    justify-content: space-around;
+    margin: 1rem 0;
+    gap: 0.5rem;
+}
+
+.note-category {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.category-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.homework-dot { background: #667eea; }
+.exam-dot { background: #f5576c; }
+.reminder-dot { background: #43e97b; }
+
+.category-count {
+    font-size: 0.8rem;
+    font-weight: 600;
+    opacity: 0.9;
+}
+
+/* Tool Footer */
+.tool-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.due-soon, .upcoming, .subjects, .recent-notes {
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.due-soon {
+    color: #ff6b6b;
+}
+
+.upcoming {
+    color: #f5576c;
+}
+
+.arrow-icon {
+    font-size: 1.2rem;
+    opacity: 0.7;
+    transition: transform 0.3s ease;
+}
+
+.tool-card:hover .arrow-icon {
+    transform: translateX(4px);
+    opacity: 1;
+}
+
+/* Quick Actions */
+.quick-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.quick-action-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: var(--light);
+    padding: 0.75rem 1.25rem;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    backdrop-filter: blur(10px);
+}
+
+.quick-action-btn:hover {
+    background: rgba(255,255,255,0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+.action-icon {
+    font-size: 1rem;
+}
+
+/* Dark theme säätöjä */
+body.dark-theme .tools-section {
+    background: linear-gradient(135deg, rgba(30,30,30,0.8) 0%, rgba(40,40,40,0.6) 100%);
+}
+
+body.dark-theme .tool-card {
+    background: rgba(30,30,30,0.6);
+}
+
+/* Responsiivisuus */
+@media (max-width: 768px) {
+    .tools-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .tools-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
+    .quick-actions {
+        flex-direction: column;
+    }
+    
+    .quick-action-btn {
+        justify-content: center;
+    }
+    
+    .exam-stats, .grade-stats {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .tools-section {
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .card-content {
+        padding: 1.25rem;
+    }
+    
+    .tool-icon .icon-wrapper {
+        width: 45px;
+        height: 45px;
+        font-size: 1.3rem;
+    }
+}
+
+/* Modaalityylit */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 500;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(5px);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: var(--bg-color);
+    border-radius: 15px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from { transform: translateY(-50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--input-border);
+    background: rgba(255,255,255,0.05);
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.modal-body {
+    padding: 2rem;
+    max-height: calc(90vh - 100px);
+    overflow-y: auto;
+}
+
+/* Syötekentät */
+.homework-input, .exam-input, .grade-input, .notes-input {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: var(--row-bg);
+    border-radius: 10px;
+}
+
+.notes-input {
+    grid-template-columns: 1fr;
+}
+
+#noteContent {
+    grid-column: 1 / -1;
+    height: 100px;
+    padding: 1rem;
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    background: var(--input-bg);
+    color: var(--text-color);
+    font-family: inherit;
+    resize: vertical;
+}
+
+.homework-input input, .exam-input input, .grade-input input, .notes-input input,
+.homework-input select, .exam-input select, .grade-input select, .notes-input select {
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    background: var(--input-bg);
+    color: var(--text-color);
+    font-family: inherit;
+}
+
+.add-btn {
+    grid-column: 1 / -1;
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.add-btn:hover {
+    background: color-mix(in srgb, var(--accent-color) 85%, black 15%);
+    transform: translateY(-2px);
+}
+
+/* Suodattimet */
+.homework-filters {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    color: var(--text-color);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.filter-btn.active, .filter-btn:hover {
+    background: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+}
+
+/* Listat */
+.homework-list, .exam-list, .grade-list, .notes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.homework-item, .exam-item, .grade-item, .note-item {
+    background: var(--row-bg);
+    padding: 1.5rem;
+    border-radius: 10px;
+    border-left: 4px solid var(--accent-color);
+    transition: all 0.3s ease;
+}
+
+.homework-item:hover, .exam-item:hover, .grade-item:hover, .note-item:hover {
+    transform: translateX(5px);
+    background: var(--row-hover);
+}
+
+.homework-item.overdue {
+    border-left-color: #f44336;
+    animation: pulse 2s infinite;
+}
+
+.homework-item.due-soon {
+    border-left-color: #ff9800;
+}
+
+.homework-item.completed {
+    border-left-color: #4caf50;
+    opacity: 0.7;
+}
+
+.exam-item.soon {
+    border-left-color: #ff9800;
+}
+
+.exam-item.important {
+    border-left-color: #ff5722;
+}
+
+.exam-item.critical {
+    border-left-color: #f44336;
+    animation: pulse 1.5s infinite;
+}
+
+.grade-item.excellent {
+    border-left-color: #4caf50;
+}
+
+.grade-item.good {
+    border-left-color: #8bc34a;
+}
+
+.grade-item.average {
+    border-left-color: #ffc107;
+}
+
+.grade-item.poor {
+    border-left-color: #ff9800;
+}
+
+.note-item.important {
+    border-left-color: #ff5722;
+}
+
+/* Otsikot ja tiedot */
+.homework-header, .exam-header, .grade-header, .note-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.homework-header strong, .exam-header strong, .grade-header strong, .note-header strong {
+    font-size: 1.1rem;
+    color: var(--text-color);
+}
+
+.due-date, .exam-date, .grade-date, .note-date {
+    font-size: 0.8rem;
+    opacity: 0.8;
+    background: rgba(255,255,255,0.1);
+    padding: 0.3rem 0.6rem;
+    border-radius: 12px;
+}
+
+.homework-task, .exam-topic, .grade-description, .note-content {
+    margin: 0.5rem 0;
+    line-height: 1.5;
+}
+
+/* Toiminnot */
+.homework-actions, .exam-actions, .grade-actions, .note-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
+.homework-actions button, .exam-actions button, .grade-actions button, .note-actions button {
+    padding: 0.4rem 0.8rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* Tilastokortit */
+.exam-stats, .grade-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: var(--row-bg);
+    padding: 1.5rem;
+    border-radius: 10px;
+    text-align: center;
+    border: 1px solid var(--input-border);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--accent-color);
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+/* Prioriteetit ja tärkeys */
+.priority-badge, .importance-badge {
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.priority-low { background: #4caf50; color: white; }
+.priority-medium { background: #ff9800; color: white; }
+.priority-high { background: #f44336; color: white; }
+
+.importance-normal { background: #2196f3; color: white; }
+.importance-important { background: #ff9800; color: white; }
+.importance-critical { background: #f44336; color: white; }
+
+/* Progress bar */
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--input-bg);
+    border-radius: 3px;
+    margin: 0.5rem 0;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--accent-color);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+/* Dark theme säätöjä */
+body.dark-theme .tool-card {
+    background: rgba(255,255,255,0.05);
+}
+
+body.dark-theme .modal-content {
+    background: #1e1e1e;
+}
+
+/* Responsiivisuus */
+@media (max-width: 768px) {
+    .tools-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .homework-input, .exam-input, .grade-input {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 1rem;
+    }
+    
+    .modal-body {
+        padding: 1rem;
+    }
+    
+    .exam-stats, .grade-stats {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .homework-header, .exam-header {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .tool-card {
+        padding: 1rem;
+    }
+    
+    .tool-icon {
+        font-size: 1.5rem;
+        width: 40px;
+        height: 40px;
+    }
+    
+    .exam-stats, .grade-stats {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Koeviikon tyylit */
+.exam-week-section {
+    background: rgba(255,255,255,0.08);
+    padding: 1.2rem;
+    border-radius: 15px;
+    margin-bottom: 1.5rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.exam-week-section h3 {
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--light);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.exam-week-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.exam-week-toggle {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Toggle switch */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--accent-color);
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.exam-week-dates {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 1rem;
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+}
+
+.exam-week-dates label {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.exam-week-dates input {
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    color: var(--text-color);
+}
+
+.save-exam-week-btn {
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.save-exam-week-btn:hover {
+    background: color-mix(in srgb, var(--accent-color) 85%, black 15%);
+}
+
+/* Koeviikon info */
+.exam-week-summary {
+    padding: 1rem;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.05);
+    border-left: 4px solid var(--accent-color);
+}
+
+.exam-week-summary.active {
+    border-left-color: #ff6b6b;
+    background: rgba(255,107,107,0.1);
+}
+
+.exam-week-summary.upcoming {
+    border-left-color: #ffa726;
+    background: rgba(255,167,38,0.1);
+}
+
+.exam-week-summary.ended {
+    border-left-color: #78909c;
+    background: rgba(120,144,156,0.1);
+}
+
+.exam-week-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.exam-week-stats .exam-stat {
+    text-align: center;
+    padding: 0.5rem;
+    background: rgba(255,255,255,0.1);
+    border-radius: 8px;
+}
+
+.exam-week-stats .stat-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--accent-color);
+}
+
+.exam-week-stats .stat-label {
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.exam-week-status {
+    text-align: center;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.view-details-btn {
+    width: 100%;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: var(--light);
+    padding: 0.75rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.view-details-btn:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+/* Koeviikon modal */
+.exam-week-modal {
+    max-width: 600px;
+}
+
+.exam-week-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--input-border);
+}
+
+.exam-week-timetable {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.exam-week-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--row-bg);
+    border-radius: 8px;
+    border-left: 4px solid var(--accent-color);
+    transition: all 0.3s ease;
+}
+
+.exam-week-item:hover {
+    background: var(--row-hover);
+    transform: translateX(5px);
+}
+
+.exam-week-item.past {
+    opacity: 0.6;
+}
+
+.exam-week-item.today {
+    border-left-color: #ff6b6b;
+    background: rgba(255,107,107,0.1);
+}
+
+.exam-date-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 60px;
+    background: rgba(255,255,255,0.1);
+    padding: 0.5rem;
+    border-radius: 6px;
+}
+
+.exam-date-badge .day {
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.exam-date-badge .date {
+    font-size: 0.9rem;
+}
+
+.exam-details {
+    flex: 1;
+}
+
+.exam-details strong {
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.exam-topic {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    display: block;
+}
+
+.exam-importance {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    margin-top: 0.25rem;
+    display: inline-block;
+}
+
+.importance-normal { background: #2196f3; color: white; }
+.importance-important { background: #ff9800; color: white; }
+.importance-critical { background: #f44336; color: white; }
+
+.today-badge {
+    background: #ff6b6b;
+    color: white;
+    padding: 0.3rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.exam-week-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.exam-week-actions button {
+    flex: 1;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.add-exams-btn {
+    background: var(--accent-color);
+    color: white;
+}
+
+.clear-exam-week-btn {
+    background: rgba(255,255,255,0.1);
+    color: var(--light);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+/* Tools-section toggle */
+.tools-section.collapsed {
+    cursor: pointer;
+}
+
+.tools-section.collapsed:hover {
+    background: rgba(255,255,255,0.12);
+}
+
+.tools-header {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.tools-toggle-icon {
+    transition: transform 0.3s ease;
+    margin-left: auto;
+}
+
+.tools-content {
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsiivisuus */
+@media (max-width: 768px) {
+    .exam-week-dates {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .exam-week-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .exam-week-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .exam-date-badge {
+        flex-direction: row;
+        gap: 0.5rem;
+    }
+    
+    .exam-week-actions {
+        flex-direction: column;
+    }
+}
+
+/* Yksittäisten tapahtumien toggle-tyyli */
+#eventsToggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--input-border);
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+#eventsToggle:hover {
+    color: var(--accent-color);
+}
+
+#eventsArrow {
+    transition: transform 0.3s ease;
+    font-size: 0.9rem;
+    opacity: 0.7;
+}
+
+/* Paranneltu event-lomake */
+#eventsGroup {
+    background: var(--row-bg);
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    border: 1px solid var(--input-border);
+}
+
+.event-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: 0.9rem;
+}
+
+.form-control {
+    padding: 0.8rem;
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    background: var(--input-bg);
+    color: var(--text-color);
+    font-family: inherit;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+}
+
+#addEventBtn {
+    width: 100%;
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 0.5rem;
+    font-size: 0.95rem;
+}
+
+#addEventBtn:hover {
+    background: color-mix(in srgb, var(--accent-color) 85%, black 15%);
+    transform: translateY(-2px);
+}
+
+.event-help {
+    margin-top: 0.8rem;
+    padding: 0.8rem;
+    background: rgba(67, 97, 238, 0.1);
+    border-radius: 8px;
+    border-left: 3px solid var(--accent-color);
+}
+
+.event-help small {
+    color: var(--accent-color);
+    font-size: 0.8rem;
+    opacity: 0.9;
+}
+
+/* Yksittäisten tapahtumien tyylit lukujärjestyksessä */
+.single-event {
+    border: 2px solid var(--accent-color) !important;
+    position: relative;
+    background: color-mix(in srgb, var(--color-event) 25%, transparent) !important;
+    box-shadow: 0 4px 12px rgba(67, 97, 238, 0.15);
+}
+
+.single-event::before {
+    content: '⭐';
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    font-size: 0.7rem;
+    background: var(--accent-color);
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+.lesson-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.delete-event-btn {
+    background: rgba(255,255,255,0.9);
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.7rem;
+    color: #666;
+    flex-shrink: 0;
+}
+
+.delete-event-btn:hover {
+    background: #ff4444;
+    transform: scale(1.1);
+    color: white;
+}
+
+.event-badge {
+    background: var(--accent-color);
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.lesson-duration {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.75rem;
+    opacity: 0.8;
+    color: var(--text-color);
+}
+
+/* Hieno hover-efekti */
+.single-event:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(67, 97, 238, 0.2);
+    transition: all 0.3s ease;
+}
+
+/* Tumma teema säätöjä */
+body.dark-theme .single-event {
+    border-color: var(--accent-color) !important;
+    background: color-mix(in srgb, var(--color-event) 15%, transparent) !important;
+}
+
+body.dark-theme .delete-event-btn {
+    background: rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.8);
+}
+
+body.dark-theme .delete-event-btn:hover {
+    background: #ff4444;
+    color: white;
+}
+
+/* Responsiivisuus */
+@media (max-width: 768px) {
+    .event-form-grid {
+        grid-template-columns: 1fr;
+        gap: 0.8rem;
+    }
+    
+    .lesson-header {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-start;
+    }
+    
+    .delete-event-btn {
+        align-self: flex-end;
+    }
+    
+    #eventsGroup {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .form-control {
+        padding: 0.7rem;
+    }
+    
+    #addEventBtn {
+        padding: 0.8rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* Kontekstivalikon tyylit */
+#slotContextMenu {
+    background: white !important;
+    border: 1px solid #ddd !important;
+    border-radius: 8px !important;
+    padding: 8px 0 !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    min-width: 180px !important;
+    z-index: 10000 !important;
+    font-family: 'Poppins', sans-serif !important;
+}
+
+.context-item {
+    padding: 8px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s;
+    font-size: 14px;
+    color: #333 !important;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+}
+
+.context-item:hover {
+    background-color: #f5f5f5;
+}
+
+.context-item.danger {
+    color: #e74c3c !important;
+}
+
+.context-item.danger:hover {
+    background-color: #ffeaea;
+}
+
+#slotContextMenu hr {
+    margin: 5px 0;
+    border: none;
+    border-top: 1px solid #eee;
+}
+
+/* Tumma teema */
+body.dark-theme #slotContextMenu {
+    background: #2d3748 !important;
+    border-color: #4a5568 !important;
+    color: white !important;
+}
+
+body.dark-theme .context-item {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme .context-item:hover {
+    background-color: #4a5568;
+}
+
+body.dark-theme .context-item.danger {
+    color: #fc8181 !important;
+}
+
+body.dark-theme .context-item.danger:hover {
+    background-color: #742a2a;
+}
+
+body.dark-theme #slotContextMenu hr {
+    border-color: #4a5568;
 }
