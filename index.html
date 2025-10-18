@@ -8,7 +8,7 @@
     
     <!-- Fontit ja tyylit -->
     <!-- Korvaa nykyinen fonttilinkki tällä: -->
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&family=Montserrat:wght@300;400;600;700&family=Comic+Sans+MS&family=Arial&family=Georgia&family=Times+New+Roman&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" type="image/png" href="Wilma.png">
@@ -207,7 +207,7 @@
                 </div>
             </div>
                 
-                <!-- Koetentsejä kortti -->
+                <!-- Kokeet kortti -->
                 <div class="tool-card exam-card" role="listitem" onclick="showExamTracker()" tabindex="0">
                     <div class="card-gradient" aria-hidden="true"></div>
                     <div class="card-content">
@@ -410,16 +410,20 @@
         </select>
       </div>
 
-      <div class="setting-group">
-        <label for="fontSelect">Fontti</label>
-        <select id="fontSelect">
-          <option value="Poppins, sans-serif">Poppins</option>
-          <option value="Roboto, sans-serif">Roboto</option>
-          <option value="Open Sans, sans-serif">Open Sans</option>
-          <option value="Montserrat, sans-serif">Montserrat</option>
-          <option value="Comic Sans MS, cursive">Comic Sans MS 😎</option>
-        </select>
-      </div>
+        <div class="setting-group">
+            <label for="fontSelect">Fontti</label>
+            <select id="fontSelect">
+                <option value="Poppins, sans-serif">Poppins</option>
+                <option value="Roboto, sans-serif">Roboto</option>
+                <option value="Open Sans, sans-serif">Open Sans</option>
+                <option value="Montserrat, sans-serif">Montserrat</option>
+                <option value="Comic Sans MS, cursive">Comic Sans MS 😎</option>
+                <option value="Arial, sans-serif">Arial</option>
+                <option value="Georgia, serif">Georgia</option>
+                <option value="Times New Roman, serif">Times New Roman</option>
+                <option value="system-ui, sans-serif">System Default</option>
+            </select>
+        </div>
 
       <div class="setting-group">
         <label for="fontSize">Fonttikoko</label>

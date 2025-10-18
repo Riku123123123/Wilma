@@ -23,9 +23,6 @@ function initializeApp() {
     initializeEventDates();
     initializeSettingsTabs();
     
-    // Lataa fonttiasetukset
-    loadFontSettings();
-    
     // Päivitä näkymä
     generateTimetable();
     updateMeals();
@@ -35,9 +32,14 @@ function initializeApp() {
     
     // Alusta bottom-navigaatio
     initializeBottomNav();
-    
+
+    setTimeout(() => {
+    loadFontSettings();
+    }, 300);
+
     // Aseta tapahtumakuuntelijat VIIMEISEKSI
     setupEventListeners();
+    
     
     // Käynnistä ajastimet
     updateClock();
@@ -128,6 +130,26 @@ function loadTabContent(tabId) {
     }
 }
 
+function setupSimpleModalClose() {
+    // Sulje modaali klikkaamalla taustaa
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('modal')) {
+            e.target.style.display = 'none';
+        }
+    });
+    
+    // Sulje modaali Esc-näppäimellä
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal').forEach(modal => {
+                if (modal.style.display === 'flex') {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+    });
+}
+
 // KORVAA loadAppearanceSettings-funktio tällä:
 function loadAppearanceSettings() {
     const savedTheme = localStorage.getItem('theme') || 'light';
@@ -162,61 +184,72 @@ function updateFontSizeDisplay(size) {
 }
 
 // Korvaa fontin vaihtokuuntelija tällä:
-document.getElementById('fontSelect').addEventListener('change', function() {
-    const selectedFont = this.value;
-    document.body.style.fontFamily = selectedFont;
-    localStorage.setItem('font', selectedFont);
-    
-    // Päivitä myös kaikki modaalit ja erikoiselementit
-    updateAllFonts(selectedFont);
-});
+function initializeFontListeners() {
+    const fontSelect = document.getElementById('fontSelect');
+    if (fontSelect) {
+        // Poista vanhat kuuntelijat
+        fontSelect.replaceWith(fontSelect.cloneNode(true));
+        
+        // Lisää uusi kuuntelija
+        document.getElementById('fontSelect').addEventListener('change', function() {
+            const selectedFont = this.value;
+            console.log('Fonttia vaihdetaan:', selectedFont);
+            
+            // Tallenna välittömästi
+            localStorage.setItem('font', selectedFont);
+            
+            // Päivitä näkymä
+            document.body.style.fontFamily = selectedFont;
+            updateAllFonts(selectedFont);
+            
+            // Varmista että muutos näkyy
+            setTimeout(() => {
+                document.body.style.fontFamily = selectedFont;
+            }, 50);
+        });
+    }
+}
 
-// Lisää funktio kaikkien fonttien päivittämiseen - PÄIVITETTY VERSIO
 function updateAllFonts(fontFamily) {
     try {
         console.log('Päivitetään kaikkien elementtien fontit:', fontFamily);
         
-        // Hae nykyinen fonttikoko body-elementistä
-        const bodyFontSize = getComputedStyle(document.body).fontSize;
+        // 1. Päivitä body ensin
+        document.body.style.fontFamily = fontFamily;
         
-        // Päivitä modaalit jos ne ovat olemassa
-        const modals = document.querySelectorAll('.modal-content');
-        if (modals.length > 0) {
-            modals.forEach(modal => {
-                modal.style.fontFamily = fontFamily;
-                modal.style.fontSize = bodyFontSize; // Käytä samaa kokoa kuin bodyssä
+        // 2. Päivitä modaalit ja erikoiselementit
+        const elementsToUpdate = [
+            '.modal-content',
+            '.modal',
+            '#settingsModal',
+            '#slotContextMenu',
+            '.color-picker-modal',
+            'input',
+            'select',
+            'textarea',
+            'button'
+        ];
+        
+        elementsToUpdate.forEach(selector => {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach(element => {
+                try {
+                    element.style.fontFamily = fontFamily;
+                } catch (e) {
+                    console.warn(`Ei voitu päivittää fonttia elementille: ${selector}`, e);
+                }
             });
-        }
+        });
         
-        // Päivitä asetusmodaali jos se on olemassa
-        const settingsModal = document.getElementById('settingsModal');
-        if (settingsModal) {
-            settingsModal.style.fontFamily = fontFamily;
-            settingsModal.style.fontSize = bodyFontSize;
-        }
-        
-        // Päivitä kontekstivalikot jos ne ovat olemassa
-        const contextMenus = document.querySelectorAll('#slotContextMenu, .color-picker-modal');
-        if (contextMenus.length > 0) {
-            contextMenus.forEach(el => {
-                el.style.fontFamily = fontFamily;
-                el.style.fontSize = bodyFontSize;
-            });
-        }
-        
-        // Päivitä input-kentät jos ne ovat olemassa
-        const formElements = document.querySelectorAll('input, select, textarea, button');
-        if (formElements.length > 0) {
-            formElements.forEach(el => {
-                el.style.fontFamily = fontFamily;
-                // Älä pakota fonttikokoa input-kenttiin, anna niiden periä se
-            });
-        }
+        // 3. Pakota uudelleenpiirto
+        document.body.style.display = 'none';
+        document.body.offsetHeight; // Trigger reflow
+        document.body.style.display = '';
         
         console.log('Fontit päivitetty onnistuneesti');
         
     } catch (error) {
-        console.error('Virhe fonttien päivittämisessä:', error);
+        console.error('Kriittinen virhe fonttien päivittämisessä:', error);
     }
 }
 
@@ -226,29 +259,35 @@ function loadFontSettings() {
     const savedFont = localStorage.getItem('font');
     const savedFontSize = localStorage.getItem('fontSize');
     
-    try {
-        if (savedFont) {
-            document.body.style.fontFamily = savedFont;
-            // Päivitä fontit myöhemmin kun DOM on valmis
-            setTimeout(() => {
-                try {
-                    updateAllFonts(savedFont);
-                } catch (error) {
-                    console.error('Virhe kaikkien fonttien päivittämisessä:', error);
+    // Odota että DOM on täysin valmis
+    setTimeout(() => {
+        try {
+            if (savedFont) {
+                console.log('Asetetaan tallennettu fontti:', savedFont);
+                document.body.style.fontFamily = savedFont;
+                
+                // Päivitä kaikki elementit varmuuden vuoksi
+                updateAllFonts(savedFont);
+            }
+            
+            if (savedFontSize) {
+                console.log('Asetetaan tallennettu fonttikoko:', savedFontSize);
+                document.body.style.fontSize = savedFontSize + 'px';
+                
+                // Päivitä myös input-kentän arvo
+                const fontSizeInput = document.getElementById('fontSize');
+                if (fontSizeInput) {
+                    fontSizeInput.value = savedFontSize;
+                    updateFontSizeDisplay(savedFontSize);
                 }
-            }, 500);
+            }
+            
+            console.log('Fonttiasetukset ladattu onnistuneesti');
+            
+        } catch (error) {
+            console.error('Virhe fonttiasetusten lataamisessa:', error);
         }
-        
-        if (savedFontSize) {
-            document.body.style.fontSize = savedFontSize + 'px';
-            // Fonttikoko päivittyy automaattisesti body-elementistä periytävien elementtien kautta
-        }
-        
-        console.log('Fonttiasetukset ladattu onnistuneesti');
-        
-    } catch (error) {
-        console.error('Virhe fonttiasetusten lataamisessa:', error);
-    }
+    }, 100);
 }
 
 // Lataa lukujärjestysasetukset
@@ -369,15 +408,16 @@ function setupEventListeners() {
             document.getElementById('settingsModal').style.display = 'none';
         });
     }
-
-        // Alusta tools-section
-    initializeToolsSection();
     
     // Alusta pelikortit
     initializeGameCards();
     
     // Alusta opiskelutyökalujen kortit
     initializeToolCards();
+
+    setupSimpleModalClose();
+
+    initializeToolsSection();
 
     // Teeman vaihto - lisätään myöhemmin kun elementti on varmasti olemassa
     setTimeout(() => {
@@ -392,16 +432,23 @@ function setupEventListeners() {
 
     // Fontin vaihto - lisätään myöhemmin
     setTimeout(() => {
-        const fontSelect = document.getElementById('fontSelect');
-        if (fontSelect) {
-            fontSelect.addEventListener('change', function() {
-                const selectedFont = this.value;
-                document.body.style.fontFamily = selectedFont;
-                localStorage.setItem('font', selectedFont);
-                updateAllFonts(selectedFont);
+        initializeFontListeners();
+        
+        // Fontin koko
+        const fontSize = document.getElementById('fontSize');
+        if (fontSize) {
+            fontSize.addEventListener('input', function() {
+                const newSize = this.value + 'px';
+                document.body.style.fontSize = newSize;
+                localStorage.setItem('fontSize', this.value);
+                updateFontSizeDisplay(this.value);
+                
+                // Pakota fontin päivitys
+                const currentFont = localStorage.getItem('font') || 'Poppins, sans-serif';
+                updateAllFonts(currentFont);
             });
         }
-    }, 100);
+    }, 500);
 
     // Fontin koko - lisätään myöhemmin
     setTimeout(() => {
@@ -1848,18 +1895,32 @@ function closeRpsPopup() {
     document.getElementById("rpsPopup").style.display = "none";
 }
 
-// ========== OPISKELUTYÖKALUJEN TOGGLE ==========
-function toggleToolsSection() {
+let isToggling = false;
+
+function toggleToolsSection(event) {
+    // Estä useat samanaikaiset kutsut
+    if (isToggling) return;
+    isToggling = true;
+    
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    
     const toolsSection = document.querySelector('.tools-section');
     const toolsContent = document.querySelector('.tools-content');
     const toggleIcon = document.querySelector('.tools-toggle-icon');
     
     if (!toolsSection || !toolsContent || !toggleIcon) {
-        console.error('Tools-section elementtejä ei löytynyt');
+        isToggling = false;
         return;
     }
     
-    if (toolsSection.classList.contains('collapsed')) {
+    const isCollapsed = toolsSection.classList.contains('collapsed');
+    
+    console.log('ToggleToolsSection kutsuttu, nykyinen tila:', isCollapsed ? 'suljettu' : 'auki');
+    
+    if (isCollapsed) {
         // Avaa työkalut
         toolsSection.classList.remove('collapsed');
         toolsContent.style.display = 'block';
@@ -1872,15 +1933,33 @@ function toggleToolsSection() {
         toggleIcon.classList.replace('fa-chevron-up', 'fa-chevron-down');
         console.log('Työkalut suljettu');
     }
+    
+    // Sallii uuden klikkauksen 300ms kuluttua
+    setTimeout(() => {
+        isToggling = false;
+    }, 300);
 }
 
-// Päivitä tools-headerin klikkikuuntelija
 function initializeToolsSection() {
+    console.log('Alustetaan tools-section...');
+    
     const toolsHeader = document.querySelector('.tools-header');
-    if (toolsHeader) {
-        toolsHeader.addEventListener('click', toggleToolsSection);
-        console.log('Tools-section klikkikuuntelija asetettu');
+    if (!toolsHeader) {
+        console.error('Tools-header elementtiä ei löytynyt');
+        return;
     }
+    
+    // Poista kaikki olemassa olevat klikkikuuntelijat
+    const newToolsHeader = toolsHeader.cloneNode(true);
+    toolsHeader.parentNode.replaceChild(newToolsHeader, toolsHeader);
+    
+    // Lisää uusi kuuntelija
+    newToolsHeader.addEventListener('click', function(e) {
+        console.log('Tools-header klikattu - kutsutaan toggleToolsSection');
+        toggleToolsSection(e);
+    }, { once: false });
+    
+    console.log('Tools-section alustettu onnistuneesti');
 }
 
 // ========== KOEVIKKO-OMINAISUUS ==========
@@ -3021,4 +3100,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js");
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
 }
