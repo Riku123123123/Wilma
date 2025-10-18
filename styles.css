@@ -104,6 +104,13 @@ body {
     overflow-x: hidden;
 }
 
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+
 /* Fonttivaihtoehdot */
 .font-poppins { font-family: 'Poppins', sans-serif; }
 .font-roboto { font-family: 'Roboto', sans-serif; }
