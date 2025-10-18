@@ -7,7 +7,8 @@
     <title>Koulun lukujärjestys - Rauman lukio</title>
     
     <!-- Fontit ja tyylit -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Korvaa nykyinen fonttilinkki tällä: -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" type="image/png" href="Wilma.png">
@@ -127,31 +128,33 @@
         </section>
 
         <section class="exam-week-section" aria-labelledby="exam-week-heading">
-    <h3 id="exam-week-heading">📅 Koeviikko</h3>
-    <div class="exam-week-controls">
-        <div class="exam-week-toggle">
-            <label class="toggle-switch">
-                <input type="checkbox" id="examWeekToggle">
-                <span class="slider"></span>
-            </label>
-            <span id="examWeekStatus">Ei koeviikkoa</span>
-        </div>
-        
-        <div class="exam-week-dates" id="examWeekDates" style="display: none;">
-            <label for="examWeekStart">Alkaa:</label>
-            <input type="date" id="examWeekStart">
-            <label for="examWeekEnd">Päättyy:</label>
-            <input type="date" id="examWeekEnd">
-            <button onclick="saveExamWeek()" class="save-exam-week-btn">
-                <i class="fas fa-save"></i> Tallenna
-            </button>
-        </div>
-        
-        <div class="exam-week-info" id="examWeekInfo">
-            <!-- Koeviikon tiedot tulevat tähän -->
-        </div>
-    </div>
-</section>
+            <h3 id="exam-week-heading">
+                Koeviikko
+            </h3>
+            <div class="exam-week-controls">
+                <div class="exam-week-toggle">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="examWeekToggle">
+                        <span class="slider"></span>
+                    </label>
+                    <span id="examWeekStatus">Ei koeviikkoa</span>
+                </div>
+                
+                <div class="exam-week-dates" id="examWeekDates" style="display: none;">
+                    <label for="examWeekStart">Alkaa:</label>
+                    <input type="date" id="examWeekStart">
+                    <label for="examWeekEnd">Päättyy:</label>
+                    <input type="date" id="examWeekEnd">
+                    <button onclick="saveExamWeek()" class="save-exam-week-btn">
+                        <i class="fas fa-save"></i> Tallenna
+                    </button>
+                </div>
+                
+                <div class="exam-week-info" id="examWeekInfo">
+                    <!-- Koeviikon tiedot tulevat tähän -->
+                </div>
+            </div>
+        </section>
 
         <!-- Opiskelutyökalut -->
         <section class="tools-section collapsed" aria-labelledby="tools-heading">

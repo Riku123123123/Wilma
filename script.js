@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeApp() {
+    console.log('Alustetaan sovellus...');
+    
     // Intro näkyy vain ensimmäisellä kerralla
     if (sessionStorage.getItem('introShown')) {
         document.querySelector('.intro').style.display = 'none';
@@ -12,15 +14,17 @@ function initializeApp() {
         sessionStorage.setItem('introShown', 'true');
     }
 
-    // Lataa tallennetut asetukset
+    // Lataa VAIKELLISET asetukset ENSIN (ei DOM-riippuvaisia)
     loadSavedSettings();
     
     // Alusta kaikki komponentit
     initializeQuickSchedules();
-    setupEventListeners();
     initializeSubjectColors();
     initializeEventDates();
     initializeSettingsTabs();
+    
+    // Lataa fonttiasetukset
+    loadFontSettings();
     
     // Päivitä näkymä
     generateTimetable();
@@ -29,14 +33,55 @@ function initializeApp() {
     initializeStudyTools();
     initializeExamWeek();
     
+    // Alusta bottom-navigaatio
+    initializeBottomNav();
+    
+    // Aseta tapahtumakuuntelijat VIIMEISEKSI
+    setupEventListeners();
+    
     // Käynnistä ajastimet
     updateClock();
     updateWeather();
     setInterval(updateClock, 1000);
     setInterval(updateWeather, 3600000);
     setInterval(updateNextLessonInfo, 60000);
+    
+    console.log('Sovellus alustettu onnistuneesti');
 }
 
+// Lisää tämä uusi funktio bottom-navigaation alustukseen
+function initializeBottomNav() {
+    console.log('Alustetaan bottom-navigaatio...');
+    
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Poista aktiivinen luokka kaikilta
+            navItems.forEach(nav => nav.classList.remove('active'));
+            
+            // Lisää aktiivinen luokka klikatulle
+            this.classList.add('active');
+            
+            const text = this.querySelector('span').textContent;
+            console.log('Navigointi:', text);
+            
+            // Toteuta navigointi
+            switch(text) {
+                case 'Lukujärjestys':
+                    // Pysy nykyisellä näkymällä
+                    break;
+                case 'Asetukset':
+                    document.getElementById('settingsModal').style.display = 'flex';
+                    break;
+                case 'Tehtävät':
+                    showHomeworkManager();
+                    break;
+            }
+        });
+    });
+}
 // Alusta asetusten välilehdet
 function initializeSettingsTabs() {
     const tabs = document.querySelectorAll('.settings-tab');
@@ -83,7 +128,7 @@ function loadTabContent(tabId) {
     }
 }
 
-// Lataa ulkoasuasetukset
+// KORVAA loadAppearanceSettings-funktio tällä:
 function loadAppearanceSettings() {
     const savedTheme = localStorage.getItem('theme') || 'light';
     const savedFont = localStorage.getItem('font') || 'Poppins, sans-serif';
@@ -93,20 +138,117 @@ function loadAppearanceSettings() {
     document.getElementById('fontSelect').value = savedFont;
     document.getElementById('fontSize').value = savedFontSize;
     
-    // Luo fonttikoon näyttö elementti jos ei ole
-    if (!document.getElementById('fontSizeValue')) {
-        const fontSizeValue = document.createElement('span');
-        fontSizeValue.id = 'fontSizeValue';
-        fontSizeValue.textContent = `${savedFontSize}px`;
-        document.getElementById('fontSize').parentNode.appendChild(fontSizeValue);
-    } else {
-        document.getElementById('fontSizeValue').textContent = `${savedFontSize}px`;
-    }
+    // Päivitä fonttikoon näyttö
+    updateFontSizeDisplay(savedFontSize);
     
     // Aseta fonttikoon muutoskuuntelija
     document.getElementById('fontSize').addEventListener('input', function() {
-        document.getElementById('fontSizeValue').textContent = `${this.value}px`;
+        updateFontSizeDisplay(this.value);
     });
+}
+
+// LISÄÄ tämä funktio:
+function updateFontSizeDisplay(size) {
+    let fontSizeValue = document.getElementById('fontSizeValue');
+    if (!fontSizeValue) {
+        fontSizeValue = document.createElement('span');
+        fontSizeValue.id = 'fontSizeValue';
+        fontSizeValue.style.marginLeft = '10px';
+        fontSizeValue.style.fontWeight = '600';
+        fontSizeValue.style.color = 'var(--accent-color)';
+        document.getElementById('fontSize').parentNode.appendChild(fontSizeValue);
+    }
+    fontSizeValue.textContent = `${size}px`;
+}
+
+// Korvaa fontin vaihtokuuntelija tällä:
+document.getElementById('fontSelect').addEventListener('change', function() {
+    const selectedFont = this.value;
+    document.body.style.fontFamily = selectedFont;
+    localStorage.setItem('font', selectedFont);
+    
+    // Päivitä myös kaikki modaalit ja erikoiselementit
+    updateAllFonts(selectedFont);
+});
+
+// Lisää funktio kaikkien fonttien päivittämiseen - PÄIVITETTY VERSIO
+function updateAllFonts(fontFamily) {
+    try {
+        console.log('Päivitetään kaikkien elementtien fontit:', fontFamily);
+        
+        // Hae nykyinen fonttikoko body-elementistä
+        const bodyFontSize = getComputedStyle(document.body).fontSize;
+        
+        // Päivitä modaalit jos ne ovat olemassa
+        const modals = document.querySelectorAll('.modal-content');
+        if (modals.length > 0) {
+            modals.forEach(modal => {
+                modal.style.fontFamily = fontFamily;
+                modal.style.fontSize = bodyFontSize; // Käytä samaa kokoa kuin bodyssä
+            });
+        }
+        
+        // Päivitä asetusmodaali jos se on olemassa
+        const settingsModal = document.getElementById('settingsModal');
+        if (settingsModal) {
+            settingsModal.style.fontFamily = fontFamily;
+            settingsModal.style.fontSize = bodyFontSize;
+        }
+        
+        // Päivitä kontekstivalikot jos ne ovat olemassa
+        const contextMenus = document.querySelectorAll('#slotContextMenu, .color-picker-modal');
+        if (contextMenus.length > 0) {
+            contextMenus.forEach(el => {
+                el.style.fontFamily = fontFamily;
+                el.style.fontSize = bodyFontSize;
+            });
+        }
+        
+        // Päivitä input-kentät jos ne ovat olemassa
+        const formElements = document.querySelectorAll('input, select, textarea, button');
+        if (formElements.length > 0) {
+            formElements.forEach(el => {
+                el.style.fontFamily = fontFamily;
+                // Älä pakota fonttikokoa input-kenttiin, anna niiden periä se
+            });
+        }
+        
+        console.log('Fontit päivitetty onnistuneesti');
+        
+    } catch (error) {
+        console.error('Virhe fonttien päivittämisessä:', error);
+    }
+}
+
+function loadFontSettings() {
+    console.log('Ladataan fonttiasetukset...');
+    
+    const savedFont = localStorage.getItem('font');
+    const savedFontSize = localStorage.getItem('fontSize');
+    
+    try {
+        if (savedFont) {
+            document.body.style.fontFamily = savedFont;
+            // Päivitä fontit myöhemmin kun DOM on valmis
+            setTimeout(() => {
+                try {
+                    updateAllFonts(savedFont);
+                } catch (error) {
+                    console.error('Virhe kaikkien fonttien päivittämisessä:', error);
+                }
+            }, 500);
+        }
+        
+        if (savedFontSize) {
+            document.body.style.fontSize = savedFontSize + 'px';
+            // Fonttikoko päivittyy automaattisesti body-elementistä periytävien elementtien kautta
+        }
+        
+        console.log('Fonttiasetukset ladattu onnistuneesti');
+        
+    } catch (error) {
+        console.error('Virhe fonttiasetusten lataamisessa:', error);
+    }
 }
 
 // Lataa lukujärjestysasetukset
@@ -163,21 +305,38 @@ function loadEventSettings() {
     initializeEventDates();
 }
 
-// Lataa tallennetut asetukset
+// Lataa tallennetut asetukset - TÄYSIN UUSI TURVALLINEN VERSIO
 function loadSavedSettings() {
+    console.log('Ladataan tallennetut asetukset...');
+    
     const savedTheme = localStorage.getItem('theme');
     const savedFont = localStorage.getItem('font');
     const savedFontSize = localStorage.getItem('fontSize');
 
-    if (savedTheme) {
-        document.getElementById('themeSelect').value = savedTheme;
-        applyTheme(savedTheme);
-    }
-    if (savedFont) {
-        document.body.style.fontFamily = savedFont;
-    }
-    if (savedFontSize) {
-        document.body.style.fontSize = savedFontSize + 'px';
+    try {
+        // Aseta teema (ei tarvitse DOM-elementtejä)
+        if (savedTheme) {
+            console.log('Asetetaan teema:', savedTheme);
+            applyTheme(savedTheme);
+        }
+
+        // Aseta fontti
+        if (savedFont) {
+            console.log('Asetetaan fontti:', savedFont);
+            document.body.style.fontFamily = savedFont;
+            // updateAllFonts kutsutaan myöhemmin
+        }
+
+        // Aseta fonttikoko
+        if (savedFontSize) {
+            console.log('Asetetaan fonttikoko:', savedFontSize);
+            document.body.style.fontSize = savedFontSize + 'px';
+        }
+
+        console.log('Perusasetukset ladattu onnistuneesti');
+        
+    } catch (error) {
+        console.error('Virhe perusasetusten lataamisessa:', error);
     }
 }
 
@@ -190,53 +349,107 @@ function applyTheme(theme) {
     }
 }
 
-// Aseta tapahtumakuuntelijat
+// Aseta tapahtumakuuntelijat - TURVALLINEN VERSIO
 function setupEventListeners() {
+    console.log('Asetetaan tapahtumakuuntelijat...');
+    
     // Asetukset-nappi
-    document.getElementById('settingsBtn').addEventListener('click', (e) => {
-        e.preventDefault();
-        document.getElementById('settingsModal').style.display = 'flex';
-    });
+    const settingsBtn = document.getElementById('settingsBtn');
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('settingsModal').style.display = 'flex';
+        });
+    }
 
     // Sulje asetukset
-    document.getElementById('closeSettings').addEventListener('click', () => {
-        document.getElementById('settingsModal').style.display = 'none';
-    });
+    const closeSettings = document.getElementById('closeSettings');
+    if (closeSettings) {
+        closeSettings.addEventListener('click', () => {
+            document.getElementById('settingsModal').style.display = 'none';
+        });
+    }
 
-    // Teeman vaihto
-    document.getElementById('themeSelect').addEventListener('change', function() {
-        applyTheme(this.value);
-        localStorage.setItem('theme', this.value);
-    });
+        // Alusta tools-section
+    initializeToolsSection();
+    
+    // Alusta pelikortit
+    initializeGameCards();
+    
+    // Alusta opiskelutyökalujen kortit
+    initializeToolCards();
 
-    // Fontin vaihto
-    document.getElementById('fontSelect').addEventListener('change', function() {
-        document.body.style.fontFamily = this.value;
-        localStorage.setItem('font', this.value);
-    });
-
-    // Fontin koko
-    document.getElementById('fontSize').addEventListener('input', function() {
-        document.body.style.fontSize = this.value + 'px';
-        localStorage.setItem('fontSize', this.value);
-        if (document.getElementById('fontSizeValue')) {
-            document.getElementById('fontSizeValue').textContent = `${this.value}px`;
+    // Teeman vaihto - lisätään myöhemmin kun elementti on varmasti olemassa
+    setTimeout(() => {
+        const themeSelect = document.getElementById('themeSelect');
+        if (themeSelect) {
+            themeSelect.addEventListener('change', function() {
+                applyTheme(this.value);
+                localStorage.setItem('theme', this.value);
+            });
         }
-    });
+    }, 100);
+
+    // Fontin vaihto - lisätään myöhemmin
+    setTimeout(() => {
+        const fontSelect = document.getElementById('fontSelect');
+        if (fontSelect) {
+            fontSelect.addEventListener('change', function() {
+                const selectedFont = this.value;
+                document.body.style.fontFamily = selectedFont;
+                localStorage.setItem('font', selectedFont);
+                updateAllFonts(selectedFont);
+            });
+        }
+    }, 100);
+
+    // Fontin koko - lisätään myöhemmin
+    setTimeout(() => {
+        const fontSize = document.getElementById('fontSize');
+        if (fontSize) {
+            fontSize.addEventListener('input', function() {
+                const newSize = this.value + 'px';
+                document.body.style.fontSize = newSize;
+                localStorage.setItem('fontSize', this.value);
+                updateFontSizeDisplay(this.value);
+                updateAllFonts(document.body.style.fontFamily);
+            });
+        }
+    }, 100);
 
     // Ruokalistan tallennus
-    document.getElementById('saveMeals').addEventListener('click', saveMeals);
+    const saveMeals = document.getElementById('saveMeals');
+    if (saveMeals) {
+        saveMeals.addEventListener('click', saveMeals);
+    }
 
     // Lukujärjestyksen muokkaus
-    document.getElementById('saveSchedule').addEventListener('click', saveSchedule);
+    const saveSchedule = document.getElementById('saveSchedule');
+    if (saveSchedule) {
+        saveSchedule.addEventListener('click', saveSchedule);
+    }
 
     // Aineiden värit
-    document.getElementById('resetColors').addEventListener('click', resetSubjectColors);
+    const resetColors = document.getElementById('resetColors');
+    if (resetColors) {
+        resetColors.addEventListener('click', resetSubjectColors);
+    }
 
     // Jakamis- ja vientitoiminnot
-    document.getElementById('exportSchedule').addEventListener('click', exportSchedule);
-    document.getElementById('importSchedule').addEventListener('click', importSchedule);
-    document.getElementById('applyImportedSchedule').addEventListener('click', applyImportedSchedule);
+    const exportSchedule = document.getElementById('exportSchedule');
+    if (exportSchedule) {
+        exportSchedule.addEventListener('click', exportSchedule);
+    }
+
+    const importSchedule = document.getElementById('importSchedule');
+    if (importSchedule) {
+        importSchedule.addEventListener('click', importSchedule);
+    }
+
+    const applyImportedSchedule = document.getElementById('applyImportedSchedule');
+    if (applyImportedSchedule) {
+        applyImportedSchedule.addEventListener('click', applyImportedSchedule);
+    }
 
     // Periodivalitsin (sivun yläreunan)
     const periodSelect = document.getElementById('periodSelect');
@@ -252,12 +465,16 @@ function setupEventListeners() {
     }
 
     // Yksittäisten tapahtumien lisäys
-    document.getElementById('addEventBtn').addEventListener('click', addSingleEvent);
+    const addEventBtn = document.getElementById('addEventBtn');
+    if (addEventBtn) {
+        addEventBtn.addEventListener('click', addSingleEvent);
+    }
 
     // Hiiren klikkaus modalin ulkopuolelle
     window.addEventListener('click', (e) => {
-        if (e.target === document.getElementById('settingsModal')) {
-            document.getElementById('settingsModal').style.display = 'none';
+        const settingsModal = document.getElementById('settingsModal');
+        if (settingsModal && e.target === settingsModal) {
+            settingsModal.style.display = 'none';
         }
     });
 
@@ -271,10 +488,13 @@ function setupEventListeners() {
 
     // Sulje asetukset Esc-näppäimellä
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && document.getElementById('settingsModal').style.display === 'flex') {
-            document.getElementById('settingsModal').style.display = 'none';
+        const settingsModal = document.getElementById('settingsModal');
+        if (e.key === 'Escape' && settingsModal && settingsModal.style.display === 'flex') {
+            settingsModal.style.display = 'none';
         }
     });
+
+    console.log('Tapahtumakuuntelijat asetettu onnistuneesti');
 }
 
 // ========== LUKUJÄRJESTYS DATA ==========
@@ -1510,7 +1730,75 @@ function openExternalGame(url) {
 }
 
 function openInternalGame(game) {
-    document.getElementById("rpsGame").style.display = game === "rps" ? "block" : "none";
+    const rpsGame = document.getElementById("rpsGame");
+    if (rpsGame) {
+        rpsGame.style.display = game === "rps" ? "block" : "none";
+        console.log('KPS-peli avattu:', game);
+    } else {
+        console.error('KPS-peliä ei löytynyt');
+    }
+}
+
+// Päivitä pelikorttien klikkikuuntelijat
+function initializeGameCards() {
+    const gameCards = document.querySelectorAll('.game-card');
+    gameCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const gameText = this.querySelector('p').textContent;
+            console.log('Pelikorttia klikattu:', gameText);
+            
+            switch(gameText) {
+                case 'Kivi-paperi-sakset':
+                    openInternalGame('rps');
+                    break;
+                case '2048':
+                    openExternalGame('https://play2048.co/');
+                    break;
+                case 'Sanuli':
+                    openExternalGame('https://sanuli.fi/');
+                    break;
+                case 'Snake':
+                    openExternalGame('https://playsnake.org/');
+                    break;
+                case 'Tetris':
+                    openExternalGame('https://tetris.com/play-tetris');
+                    break;
+                case 'Pong':
+                    openExternalGame('https://www.ponggame.org/');
+                    break;
+            }
+        });
+    });
+}
+
+// Lisää tämä funktio opiskelutyökalujen korttien alustukseen
+function initializeToolCards() {
+    const toolCards = document.querySelectorAll('.tool-card');
+    toolCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const toolType = this.className.includes('homework-card') ? 'homework' :
+                           this.className.includes('exam-card') ? 'exam' :
+                           this.className.includes('grade-card') ? 'grade' :
+                           this.className.includes('notes-card') ? 'notes' : 'unknown';
+            
+            console.log('Työkalukorttia klikattu:', toolType);
+            
+            switch(toolType) {
+                case 'homework':
+                    showHomeworkManager();
+                    break;
+                case 'exam':
+                    showExamTracker();
+                    break;
+                case 'grade':
+                    showGradeTracker();
+                    break;
+                case 'notes':
+                    showNotesManager();
+                    break;
+            }
+        });
+    });
 }
 
 let rpsInterval;
@@ -1566,16 +1854,32 @@ function toggleToolsSection() {
     const toolsContent = document.querySelector('.tools-content');
     const toggleIcon = document.querySelector('.tools-toggle-icon');
     
+    if (!toolsSection || !toolsContent || !toggleIcon) {
+        console.error('Tools-section elementtejä ei löytynyt');
+        return;
+    }
+    
     if (toolsSection.classList.contains('collapsed')) {
         // Avaa työkalut
         toolsSection.classList.remove('collapsed');
         toolsContent.style.display = 'block';
         toggleIcon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+        console.log('Työkalut avattu');
     } else {
         // Sulje työkalut
         toolsSection.classList.add('collapsed');
         toolsContent.style.display = 'none';
         toggleIcon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+        console.log('Työkalut suljettu');
+    }
+}
+
+// Päivitä tools-headerin klikkikuuntelija
+function initializeToolsSection() {
+    const toolsHeader = document.querySelector('.tools-header');
+    if (toolsHeader) {
+        toolsHeader.addEventListener('click', toggleToolsSection);
+        console.log('Tools-section klikkikuuntelija asetettu');
     }
 }
 
@@ -1665,12 +1969,20 @@ function updateExamWeekStatus() {
     }
 }
 
+// Päivitetty koeviikon renderöinti
 function renderExamWeekInfo() {
     const infoDiv = document.getElementById('examWeekInfo');
     if (!infoDiv) return;
     
     if (!examWeek.active || !examWeek.startDate || !examWeek.endDate) {
-        infoDiv.innerHTML = '<p class="no-exam-week">Ei aktiivista koeviikkoa</p>';
+        infoDiv.innerHTML = `
+            <div class="exam-week-summary">
+                <div class="empty-state">
+                    <h4>Ei aktiivista koeviikkoa</h4>
+                    <p>Aktivoi koeviikko ja aseta päivämäärät nähdäksesi tiedot</p>
+                </div>
+            </div>
+        `;
         return;
     }
     
