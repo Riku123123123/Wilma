@@ -130,33 +130,39 @@
         </section>
 
         <section class="exam-week-section" aria-labelledby="exam-week-heading">
-            <h3 id="exam-week-heading">
-                Koeviikko
-            </h3>
-            <div class="exam-week-controls">
-                <div class="exam-week-toggle">
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="examWeekToggle">
-                        <span class="slider"></span>
-                    </label>
-                    <span id="examWeekStatus">Ei koeviikkoa</span>
-                </div>
-                
-                <div class="exam-week-dates" id="examWeekDates" style="display: none;">
-                    <label for="examWeekStart">Alkaa:</label>
-                    <input type="date" id="examWeekStart">
-                    <label for="examWeekEnd">Päättyy:</label>
-                    <input type="date" id="examWeekEnd">
-                    <button onclick="saveExamWeek()" class="save-exam-week-btn">
-                        <i class="fas fa-save"></i> Tallenna
-                    </button>
-                </div>
-                
-                <div class="exam-week-info" id="examWeekInfo">
-                    <!-- Koeviikon tiedot tulevat tähän -->
-                </div>
+    <div class="exam-week-header">
+        <h3 id="exam-week-heading">
+            <i class="fas fa-calendar-week"></i> Koeviikko
+        </h3>
+        <div class="exam-week-toggle">
+            <label class="toggle-switch">
+                <input type="checkbox" id="examWeekToggle">
+                <span class="slider"></span>
+            </label>
+            <span class="toggle-label" id="examWeekStatus">Ei aktiivista koeviikkoa</span>
+        </div>
+    </div>
+    
+    <div class="exam-week-content" id="examWeekContent" style="display: none;">
+        <div class="exam-week-dates">
+            <div class="date-input-group">
+                <label for="examWeekStart">Alkaa:</label>
+                <input type="date" id="examWeekStart" class="date-input">
             </div>
-        </section>
+            <div class="date-input-group">
+                <label for="examWeekEnd">Päättyy:</label>
+                <input type="date" id="examWeekEnd" class="date-input">
+            </div>
+            <button onclick="saveExamWeek()" class="save-exam-week-btn">
+                <i class="fas fa-save"></i> Tallenna koeviikko
+            </button>
+        </div>
+        
+        <div class="exam-week-info" id="examWeekInfo">
+            <!-- Koeviikon tiedot tulevat tähän -->
+        </div>
+    </div>
+</section>
 
         <!-- Opiskelutyökalut -->
         <section class="tools-section collapsed" aria-labelledby="tools-heading">

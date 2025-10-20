@@ -2536,34 +2536,38 @@ body.dark-theme .modal-content {
     }
 }
 
-/* Koeviikon tyylit - paranneltu */
+/* Koeviikko-osion brändiin sopivat tyylit */
 .exam-week-section {
     background: rgba(255,255,255,0.08);
     padding: 1.5rem;
-    border-radius: 20px;
+    border-radius: 15px;
     margin: 1.5rem 0;
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.05);
     box-shadow: 0 8px 32px rgba(0,0,0,0.1);
     position: relative;
     overflow: hidden;
+    transition: all 0.3s ease;
 }
 
-.exam-week-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+.exam-week-section:hover {
+    background: rgba(255,255,255,0.12);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
 }
 
-.exam-week-section h3 {
+.exam-week-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 1.2rem;
-    font-size: 1.4rem;
+}
+
+.exam-week-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
     font-weight: 700;
-    background: linear-gradient(135deg, #fff, #f8f9fa);
+    background: linear-gradient(to right, #fff, #f8f9fa);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     display: flex;
@@ -2571,25 +2575,19 @@ body.dark-theme .modal-content {
     gap: 0.75rem;
 }
 
-
-.exam-week-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
 .exam-week-toggle {
     display: flex;
     align-items: center;
     gap: 1rem;
-    padding: 1rem;
-    background: rgba(255,255,255,0.05);
-    border-radius: 50px;
-    border: 1px solid rgba(255,255,255,0.1);
 }
 
+.toggle-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--light);
+}
 
-/* Toggle switch */
+/* Toggle switch - brändiin sopiva */
 .toggle-switch {
     position: relative;
     display: inline-block;
@@ -2610,9 +2608,10 @@ body.dark-theme .modal-content {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #ccc;
+    background-color: rgba(255,255,255,0.2);
     transition: .4s;
     border-radius: 24px;
+    border: 1px solid rgba(255,255,255,0.3);
 }
 
 .slider:before {
@@ -2621,7 +2620,7 @@ body.dark-theme .modal-content {
     height: 16px;
     width: 16px;
     left: 4px;
-    bottom: 4px;
+    bottom: 3px;
     background-color: white;
     transition: .4s;
     border-radius: 50%;
@@ -2629,36 +2628,44 @@ body.dark-theme .modal-content {
 
 input:checked + .slider {
     background-color: var(--accent-color);
+    border-color: var(--accent-color);
 }
 
 input:checked + .slider:before {
     transform: translateX(26px);
 }
 
+/* Koeviikon sisältö */
+.exam-week-content {
+    animation: slideDown 0.4s ease;
+}
+
 .exam-week-dates {
-    display: flex;
-    align-items: center;
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
     gap: 1rem;
-    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
     padding: 1.2rem;
     background: rgba(255,255,255,0.05);
     border-radius: 12px;
     border: 1px solid rgba(255,255,255,0.1);
-    transition: all 0.3s ease;
+    align-items: end;
 }
 
-.exam-week-dates:hover {
-    background: rgba(255,255,255,0.08);
-    transform: translateY(-2px);
+.date-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
-.exam-week-dates label {
+.date-input-group label {
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: var(--light);
+    opacity: 0.9;
 }
 
-.exam-week-dates input {
+.date-input {
     padding: 0.6rem 0.8rem;
     border-radius: 8px;
     border: 1px solid rgba(255,255,255,0.2);
@@ -2668,10 +2675,11 @@ input:checked + .slider:before {
     transition: all 0.3s ease;
 }
 
-.exam-week-dates input:focus {
+.date-input:focus {
     outline: none;
     border-color: var(--accent-color);
     box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+    background: rgba(255,255,255,0.15);
 }
 
 .save-exam-week-btn {
@@ -2686,6 +2694,8 @@ input:checked + .slider:before {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    height: fit-content;
+    white-space: nowrap;
 }
 
 .save-exam-week-btn:hover {
@@ -2694,98 +2704,483 @@ input:checked + .slider:before {
     box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
 }
 
-/* Koeviikon info */
-.exam-week-summary {
-    padding: 1rem;
-    border-radius: 10px;
-    background: rgba(255,255,255,0.05);
-    border-left: 4px solid var(--accent-color);
+/* Koeviikon info - brändiin sopiva design */
+.exam-week-info {
+    margin-top: 1rem;
 }
 
-.exam-week-summary.active {
+.exam-week-card {
+    background: rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border-left: 4px solid var(--accent-color);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.exam-week-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(67, 97, 238, 0.1), rgba(255, 255, 255, 0.05));
+    z-index: 0;
+}
+
+.exam-week-card.active {
     border-left-color: #ff6b6b;
     background: rgba(255,107,107,0.1);
 }
 
-.exam-week-summary.upcoming {
-    border-left-color: #ffa726;
+.exam-week-card.upcoming {
+    border-left-color: var(--accent-color);
     background: rgba(255,167,38,0.1);
 }
 
-.exam-week-summary.ended {
+.exam-week-card.ended {
     border-left-color: #78909c;
     background: rgba(120,144,156,0.1);
+}
+
+.exam-week-card-content {
+    position: relative;
+    z-index: 1;
 }
 
 .exam-week-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
 }
 
-.exam-week-stats .exam-stat {
+.exam-stat {
     text-align: center;
-    padding: 0.5rem;
+    padding: 1rem;
     background: rgba(255,255,255,0.1);
-    border-radius: 8px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: all 0.3s ease;
 }
 
-.exam-week-stats .stat-value {
+.exam-stat:hover {
+    background: rgba(255,255,255,0.15);
+    transform: translateY(-2px);
+}
+
+.exam-stat .stat-value {
     display: block;
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     font-weight: bold;
     color: var(--accent-color);
+    margin-bottom: 0.3rem;
 }
 
-.exam-week-stats .stat-label {
+.exam-stat .stat-label {
     font-size: 0.8rem;
-    opacity: 0.8;
+    opacity: 0.9;
+    font-weight: 600;
 }
 
 .exam-week-status {
     text-align: center;
     font-weight: 600;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 0.8rem;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.05);
+    font-size: 1rem;
 }
 
-.view-details-btn {
-    width: 100%;
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.2);
+.exam-week-card.active .exam-week-status {
+    background: rgba(255,107,107,0.2);
+    color: #ff6b6b;
+}
+
+.exam-week-card.upcoming .exam-week-status {
+    background: color-mix(in srgb, var(--accent-color) 55%, black 45%);
     color: var(--light);
-    padding: 0.75rem;
+}
+
+.exam-week-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.view-details-btn, .add-exams-btn {
+    flex: 1;
+    padding: 0.8rem 1.2rem;
+    border: none;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.view-details-btn {
+    background: rgba(255,255,255,0.1);
+    color: var(--light);
+    border: 1px solid rgba(255,255,255,0.2);
 }
 
 .view-details-btn:hover {
     background: rgba(255,255,255,0.15);
+    transform: translateY(-2px);
 }
 
-/* Koeviikon modal */
+.add-exams-btn {
+    background: var(--accent-color);
+    color: white;
+}
+
+.add-exams-btn:hover {
+    background: color-mix(in srgb, var(--accent-color) 85%, black 15%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+}
+
+/* Koeviikon muokkaustoiminnot */
+.exam-week-edit-btn {
+    background: rgba(255,255,255,0.1);
+    color: var(--light);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 0.75rem 1.2rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.exam-week-edit-btn:hover {
+    background: rgba(255,255,255,0.15);
+    transform: translateY(-2px);
+}
+
+/* Kolme nappia rivillä */
+.exam-week-actions-modal.three-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.8rem;
+}
+
+@media (max-width: 768px) {
+    .exam-week-actions-modal.three-buttons {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Päivämäärän muokkaus modal */
+.exam-week-edit-modal {
+    max-width: 500px;
+}
+
+.edit-dates-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.edit-dates-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.edit-date-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.edit-date-group label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--light);
+}
+
+.edit-date-input {
+    padding: 0.8rem;
+    border-radius: 8px;
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    color: var(--text-color);
+    font-family: inherit;
+    transition: all 0.3s ease;
+}
+
+.edit-date-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+}
+
+.edit-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.save-edit-btn {
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    flex: 1;
+}
+
+.cancel-edit-btn {
+    background: rgba(255,255,255,0.1);
+    color: var(--light);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    flex: 1;
+}
+
+.save-edit-btn:hover {
+    background: color-mix(in srgb, var(--accent-color) 85%, black 15%);
+    transform: translateY(-2px);
+}
+
+.cancel-edit-btn:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+.exam-week-info-preview {
+    background: rgba(255,255,255,0.05);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.exam-week-info-preview h4 {
+    margin: 0 0 0.8rem 0;
+    font-size: 1rem;
+    color: var(--light);
+}
+
+.preview-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.preview-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    background: rgba(255,255,255,0.05);
+    border-radius: 6px;
+}
+
+.preview-label {
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+.preview-value {
+    font-weight: 600;
+    color: var(--accent-color);
+}
+
+/* Empty state */
+.empty-exam-week {
+    text-align: center;
+    padding: 2rem;
+    color: rgba(255,255,255,0.7);
+}
+
+.empty-exam-week .empty-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-exam-week h4 {
+    margin-bottom: 0.5rem;
+    color: var(--light);
+    font-size: 1.1rem;
+}
+
+.empty-exam-week p {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+/* Progress bar */
+.exam-week-progress {
+    margin: 1rem 0;
+}
+
+.progress-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--accent-color);
+    border-radius: 3px;
+    transition: width 0.8s ease;
+}
+
+/* Responsiivisuus */
+@media (max-width: 768px) {
+    .exam-week-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .exam-week-dates {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .exam-week-stats {
+        grid-template-columns: 1fr;
+        gap: 0.8rem;
+    }
+    
+    .exam-week-actions {
+        flex-direction: column;
+    }
+    
+    .exam-stat .stat-value {
+        font-size: 1.4rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .exam-week-section {
+        padding: 1rem;
+    }
+    
+    .exam-week-header h3 {
+        font-size: 1.1rem;
+    }
+    
+    .exam-week-card {
+        padding: 1.2rem;
+    }
+}
+
+/* Animaatiot */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Koeviikon yksityiskohtien modal */
 .exam-week-modal {
-    max-width: 600px;
+    max-width: 700px;
 }
 
-.exam-week-header {
+.exam-week-details-header {
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--input-border);
 }
 
-.exam-week-timetable {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    max-height: 400px;
-    overflow-y: auto;
+.exam-week-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
 }
 
-.exam-week-item {
+.exam-summary-card {
+    background: var(--row-bg);
+    padding: 1rem;
+    border-radius: 10px;
+    text-align: center;
+    border: 1px solid var(--input-border);
+}
+
+.exam-summary-value {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: var(--accent-color);
+    margin-bottom: 0.3rem;
+}
+
+.exam-summary-label {
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+.exam-week-timetable {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 1.5rem;
+}
+
+.exam-week-day {
+    margin-bottom: 1.5rem;
+}
+
+.exam-day-header {
     display: flex;
     align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.8rem;
+    padding: 0.8rem;
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.exam-day-header i {
+    color: var(--accent-color);
+}
+
+.exam-day-events {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.exam-event-item {
+    display: flex;
+    align-items: flex-start;
     gap: 1rem;
     padding: 1rem;
     background: var(--row-bg);
@@ -2794,61 +3189,318 @@ input:checked + .slider:before {
     transition: all 0.3s ease;
 }
 
-.exam-week-item:hover {
+.exam-event-item:hover {
     background: var(--row-hover);
-    transform: translateX(5px);
+    transform: translateY(-5px);
 }
 
-.exam-week-item.past {
+.exam-event-item.past {
     opacity: 0.6;
 }
 
-.exam-week-item.today {
+.exam-event-item.today {
     border-left-color: #ff6b6b;
     background: rgba(255,107,107,0.1);
 }
 
-.exam-date-badge {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-width: 60px;
-    background: rgba(255,255,255,0.1);
-    padding: 0.5rem;
-    border-radius: 6px;
-}
-
-.exam-date-badge .day {
-    font-size: 0.8rem;
-    font-weight: bold;
-    text-transform: uppercase;
-}
-
-.exam-date-badge .date {
+.exam-event-time {
+    min-width: 80px;
+    font-weight: 600;
     font-size: 0.9rem;
+    color: var(--accent-color);
 }
 
-.exam-details {
+.exam-event-details {
     flex: 1;
 }
 
-.exam-details strong {
+.exam-event-subject {
+    font-weight: 600;
+    margin-bottom: 0.3rem;
     display: block;
-    margin-bottom: 0.25rem;
 }
 
-.exam-topic {
+.exam-event-topic {
     font-size: 0.85rem;
     opacity: 0.8;
     display: block;
+    margin-bottom: 0.3rem;
 }
 
-.exam-importance {
+.exam-event-importance {
     font-size: 0.75rem;
     padding: 0.2rem 0.5rem;
     border-radius: 12px;
-    margin-top: 0.25rem;
     display: inline-block;
+}
+
+/* Kokeiden muokkaus yksityiskohtien modaalissa */
+.exam-event-actions {
+    display: flex;
+    gap: 0.3rem;
+    margin-top: 0.5rem;
+}
+
+.exam-event-action-btn {
+    padding: 0.3rem 0.6rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.edit-exam-btn {
+    background: rgba(67, 97, 238, 0.2);
+    color: var(--accent-color);
+}
+
+.edit-exam-btn:hover {
+    background: var(--accent-color);
+    color: white;
+}
+
+.delete-exam-btn {
+    background: rgba(244, 67, 54, 0.2);
+    color: #f44336;
+}
+
+.delete-exam-btn:hover {
+    background: #f44336;
+    color: white;
+}
+
+/* Kokeen muokkausmodal */
+.exam-edit-modal {
+    max-width: 500px;
+}
+
+.edit-exam-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--light);
+}
+
+.form-control {
+    padding: 0.8rem;
+    border-radius: 8px;
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    color: var(--text-color);
+    font-family: inherit;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+}
+
+.edit-exam-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.save-exam-btn {
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.cancel-exam-btn {
+    background: rgba(255,255,255,0.1);
+    color: var(--light);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.save-exam-btn:hover {
+    background: color-mix(in srgb, var(--accent-color) 85%, black 15%);
+    transform: translateY(-2px);
+}
+
+.cancel-exam-btn:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+/* Uuden kokeen lisäys koeviikolle */
+.add-exam-to-week-form {
+    display: none;
+    background: rgba(255,255,255,0.05);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.1);
+    margin-bottom: 1.5rem;
+}
+
+.add-exam-to-week-form h4 {
+    margin: 0 0 1rem 0;
+    color: var(--light);
+    font-size: 1.1rem;
+}
+
+/* Uuden kokeen lisäysmodaali */
+.add-exam-modal {
+    max-width: 500px;
+}
+
+.add-exam-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--input-border);
+}
+
+.add-exam-header h3 {
+    margin: 0;
+    color: var(--light);
+    font-size: 1.3rem;
+}
+
+.add-exam-info {
+    background: rgba(255,255,255,0.05);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border-left: 3px solid var(--accent-color);
+}
+
+.add-exam-info p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+/* Pikanapit modaalin alareunaan */
+.quick-add-shortcuts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--input-border);
+}
+
+.quick-shortcut-btn {
+    padding: 0.7rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.quick-shortcut-primary {
+    background: var(--accent-color);
+    color: white;
+}
+
+.quick-shortcut-secondary {
+    background: rgba(255,255,255,0.1);
+    color: var(--light);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.quick-shortcut-primary:hover {
+    background: color-mix(in srgb, var(--accent-color) 85%, black 15%);
+    transform: translateY(-2px);
+}
+
+.quick-shortcut-secondary:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+.quick-add-actions {
+    display: flex;
+    gap: 0.8rem;
+    margin-top: 1rem;
+}
+
+.quick-add-btn {
+    flex: 1;
+    padding: 0.7rem 1rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.quick-add-save {
+    background: var(--accent-color);
+    color: white;
+}
+
+.quick-add-save:hover {
+    background: color-mix(in srgb, var(--accent-color) 85%, black 15%);
+    transform: translateY(-2px);
+}
+
+.quick-add-cancel {
+    background: rgba(255,255,255,0.1);
+    color: var(--light);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.quick-add-cancel:hover {
+    background: rgba(255,255,255,0.15);
 }
 
 .importance-normal { background: #2196f3; color: white; }
@@ -2864,93 +3516,39 @@ input:checked + .slider:before {
     font-weight: bold;
 }
 
-.exam-week-actions {
+.exam-week-actions-modal {
     display: flex;
     gap: 1rem;
     margin-top: 1.5rem;
 }
 
-.exam-week-actions button {
+.exam-week-actions-modal button {
     flex: 1;
     padding: 0.75rem;
     border: none;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
+    font-weight: 600;
 }
 
-.add-exams-btn {
+.add-exams-modal-btn {
     background: var(--accent-color);
     color: white;
 }
 
-.clear-exam-week-btn {
+.clear-exam-week-modal-btn {
     background: rgba(255,255,255,0.1);
     color: var(--light);
     border: 1px solid rgba(255,255,255,0.2);
 }
 
-/* Tools-section toggle */
-.tools-section.collapsed {
-    cursor: pointer;
+.add-exams-modal-btn:hover {
+    background: color-mix(in srgb, var(--accent-color) 85%, black 15%);
 }
 
-.tools-section.collapsed:hover {
-    background: rgba(255,255,255,0.12);
-}
-
-.tools-header {
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.tools-toggle-icon {
-    transition: transform 0.3s ease;
-    color: var(--accent-color);
-}
-
-.tools-section.collapsed .tools-toggle-icon {
-    transform: rotate(0deg);
-}
-
-.tools-section:not(.collapsed) .tools-toggle-icon {
-    transform: rotate(180deg);
-}
-
-.tools-content {
-    animation: slideDown 1.3s ease;
-}
-
-@keyframes slideDown {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Responsiivisuus */
-@media (max-width: 768px) {
-    .exam-week-dates {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .exam-week-stats {
-        grid-template-columns: 1fr;
-    }
-    
-    .exam-week-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.75rem;
-    }
-    
-    .exam-date-badge {
-        flex-direction: row;
-        gap: 0.5rem;
-    }
-    
-    .exam-week-actions {
-        flex-direction: column;
-    }
+.clear-exam-week-modal-btn:hover {
+    background: rgba(255,255,255,0.15);
 }
 
 /* Yksittäisten tapahtumien toggle-tyyli */

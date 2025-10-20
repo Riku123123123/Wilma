@@ -2083,7 +2083,7 @@ function initializeToolsSection() {
     
 }
 
-// ========== KOEVIKKO-OMINAISUUS ==========
+// ========== KOEVIIKKO-OMINAISUUS ==========
 let examWeek = JSON.parse(localStorage.getItem('examWeek')) || {
     active: false,
     startDate: '',
@@ -2091,16 +2091,16 @@ let examWeek = JSON.parse(localStorage.getItem('examWeek')) || {
     exams: []
 };
 
+// Päivitetty koeviikon alustus
 function initializeExamWeek() {
     const toggle = document.getElementById('examWeekToggle');
-    const datesDiv = document.getElementById('examWeekDates');
-    const statusSpan = document.getElementById('examWeekStatus');
+    const content = document.getElementById('examWeekContent');
     
     if (!toggle) return;
     
     // Aseta nykyinen tila
     toggle.checked = examWeek.active;
-    datesDiv.style.display = examWeek.active ? 'block' : 'none';
+    content.style.display = examWeek.active ? 'block' : 'none';
     
     // Aseta päivämäärät jos saatavilla
     if (examWeek.startDate) {
@@ -2115,7 +2115,7 @@ function initializeExamWeek() {
     
     // Toggle-kuuntelija
     toggle.addEventListener('change', function() {
-        datesDiv.style.display = this.checked ? 'block' : 'none';
+        content.style.display = this.checked ? 'block' : 'none';
         if (!this.checked) {
             examWeek.active = false;
             localStorage.setItem('examWeek', JSON.stringify(examWeek));
@@ -2159,28 +2159,25 @@ function updateExamWeekStatus() {
     if (examWeek.active && examWeek.startDate && examWeek.endDate) {
         const start = new Date(examWeek.startDate).toLocaleDateString('fi-FI');
         const end = new Date(examWeek.endDate).toLocaleDateString('fi-FI');
-        statusSpan.textContent = `Koeviikko: ${start} - ${end}`;
-        statusSpan.style.color = '#ff6b6b';
-        statusSpan.style.fontWeight = 'bold';
+        statusSpan.textContent = `Aktiivinen: ${start} - ${end}`;
+        statusSpan.style.color = 'var(--accent-color)';
     } else {
-        statusSpan.textContent = 'Ei koeviikkoa';
+        statusSpan.textContent = 'Ei aktiivista koeviikkoa';
         statusSpan.style.color = '';
-        statusSpan.style.fontWeight = '';
     }
 }
 
-// Päivitetty koeviikon renderöinti
+
 function renderExamWeekInfo() {
     const infoDiv = document.getElementById('examWeekInfo');
     if (!infoDiv) return;
     
     if (!examWeek.active || !examWeek.startDate || !examWeek.endDate) {
         infoDiv.innerHTML = `
-            <div class="exam-week-summary">
-                <div class="empty-state">
-                    <h4>Ei aktiivista koeviikkoa</h4>
-                    <p>Aktivoi koeviikko ja aseta päivämäärät nähdäksesi tiedot</p>
-                </div>
+            <div class="empty-exam-week">
+                <div class="empty-icon">📚</div>
+                <h4>Ei aktiivista koeviikkoa</h4>
+                <p>Aktivoi koeviikko ja aseta päivämäärät nähdäksesi tiedot</p>
             </div>
         `;
         return;
@@ -2212,30 +2209,52 @@ function renderExamWeekInfo() {
         statusText = 'Koeviikko on päättynyt';
         statusClass = 'ended';
     } else {
-        statusText = 'Koeviikko käynnissä!';
+        const daysLeft = Math.ceil((endDate - today) / (1000 * 3600 * 24));
+        statusText = `Koeviikko käynnissä! ${daysLeft} päivää jäljellä`;
         statusClass = 'active';
     }
     
+    const progress = getExamWeekProgress();
+    
     infoDiv.innerHTML = `
-        <div class="exam-week-summary ${statusClass}">
-            <div class="exam-week-stats">
-                <div class="exam-stat">
-                    <span class="stat-value">${examsInWeek.length}</span>
-                    <span class="stat-label">koetta</span>
+        <div class="exam-week-card ${statusClass}">
+            <div class="exam-week-card-content">
+                <div class="exam-week-stats">
+                    <div class="exam-stat">
+                        <span class="stat-value">${examsInWeek.length}</span>
+                        <span class="stat-label">Kokeet</span>
+                    </div>
+                    <div class="exam-stat">
+                        <span class="stat-value">${importantExams.length}</span>
+                        <span class="stat-label">Tärkeät</span>
+                    </div>
+                    <div class="exam-stat">
+                        <span class="stat-value">${progress}%</span>
+                        <span class="stat-label">Valmista</span>
+                    </div>
                 </div>
-                <div class="exam-stat">
-                    <span class="stat-value">${importantExams.length}</span>
-                    <span class="stat-label">tärkeää</span>
+                
+                <div class="exam-week-progress">
+                    <div class="progress-label">
+                        <span>Koeviikon edistyminen</span>
+                        <span>${progress}%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${progress}%"></div>
+                    </div>
                 </div>
-                <div class="exam-stat">
-                    <span class="stat-value">${getExamWeekProgress()}%</span>
-                    <span class="stat-label">valmista</span>
+                
+                <div class="exam-week-status">${statusText}</div>
+                
+                <div class="exam-week-actions">
+                    <button onclick="showExamWeekDetails()" class="view-details-btn">
+                        <i class="fas fa-list"></i> Näytä yksityiskohdat
+                    </button>
+                    <button onclick="addExamsToWeek()" class="add-exams-btn">
+                        <i class="fas fa-plus"></i> Lisää kokeita
+                    </button>
                 </div>
             </div>
-            <div class="exam-week-status">${statusText}</div>
-            <button onclick="showExamWeekDetails()" class="view-details-btn">
-                <i class="fas fa-list"></i> Näytä yksityiskohdat
-            </button>
         </div>
     `;
 }
@@ -2269,7 +2288,23 @@ function showExamWeekDetails() {
     const examsInWeek = examList.filter(exam => {
         const examDate = new Date(exam.date);
         return examDate >= startDate && examDate <= endDate;
-    }).sort((a, b) => new Date(a.date) - new Date(b.date));
+    });
+    
+    // Ryhmittele kokeet päivittäin
+    const examsByDay = {};
+    examsInWeek.forEach(exam => {
+        const examDate = new Date(exam.date);
+        const dayKey = examDate.toDateString();
+        
+        if (!examsByDay[dayKey]) {
+            examsByDay[dayKey] = [];
+        }
+        
+        examsByDay[dayKey].push(exam);
+    });
+    
+    // Järjestä päivät
+    const sortedDays = Object.keys(examsByDay).sort((a, b) => new Date(a) - new Date(b));
     
     // Luo modal sisältö
     const modalContent = `
@@ -2278,50 +2313,109 @@ function showExamWeekDetails() {
             <button class="close-btn" onclick="closeModal()">&times;</button>
         </div>
         <div class="modal-body">
-            <div class="exam-week-header">
+            <div class="exam-week-details-header">
                 <p><strong>Aikaväli:</strong> ${startDate.toLocaleDateString('fi-FI')} - ${endDate.toLocaleDateString('fi-FI')}</p>
                 <p><strong>Kokeita yhteensä:</strong> ${examsInWeek.length}</p>
+            </div>
+            
+            <div class="exam-week-summary">
+                <div class="exam-summary-card">
+                    <span class="exam-summary-value">${examsInWeek.length}</span>
+                    <span class="exam-summary-label">Kaikki kokeet</span>
+                </div>
+                <div class="exam-summary-card">
+                    <span class="exam-summary-value">${examsInWeek.filter(e => e.importance === 'important' || e.importance === 'critical').length}</span>
+                    <span class="exam-summary-label">Tärkeät kokeet</span>
+                </div>
+                <div class="exam-summary-card">
+                    <span class="exam-summary-value">${getExamWeekProgress()}%</span>
+                    <span class="exam-summary-label">Edistyminen</span>
+                </div>
             </div>
             
             ${examsInWeek.length === 0 ? `
                 <div class="empty-state">
                     <div class="empty-icon">📝</div>
                     <h3>Ei kokeita koeviikolla</h3>
-                    <p>Lisää kokeita koeviikolle kokeiden hallinnasta</p>
+                    <p>Klikkaa "Lisää kokeita" alapuolelta aloittaaksesi</p>
                 </div>
             ` : `
                 <div class="exam-week-timetable">
-                    ${examsInWeek.map(exam => {
-                        const examDate = new Date(exam.date);
+                    ${sortedDays.map(dayKey => {
+                        const dayDate = new Date(dayKey);
                         const today = new Date();
-                        const isToday = examDate.toDateString() === today.toDateString();
-                        const isPast = examDate < today;
+                        const isToday = dayDate.toDateString() === today.toDateString();
+                        const isPast = dayDate < today;
+                        
+                        const dayExams = examsByDay[dayKey].sort((a, b) => 
+                            new Date(a.date) - new Date(b.date)
+                        );
+                        
+                        const dayName = dayDate.toLocaleDateString('fi-FI', { 
+                            weekday: 'long',
+                            day: 'numeric',
+                            month: 'numeric'
+                        });
                         
                         return `
-                            <div class="exam-week-item ${isPast ? 'past' : ''} ${isToday ? 'today' : ''}">
-                                <div class="exam-date-badge">
-                                    <span class="day">${examDate.toLocaleDateString('fi-FI', { weekday: 'short' })}</span>
-                                    <span class="date">${examDate.getDate()}.${examDate.getMonth() + 1}.</span>
-                                </div>
-                                <div class="exam-details">
-                                    <strong>${exam.subject}</strong>
-                                    <span class="exam-topic">${exam.topic}</span>
-                                    <span class="exam-importance importance-${exam.importance}">
-                                        ${exam.importance === 'normal' ? 'Normaali' : exam.importance === 'important' ? 'Tärkeä' : 'Erittäin tärkeä'}
+                            <div class="exam-week-day">
+                                <div class="exam-day-header">
+                                    <i class="fas fa-calendar-day"></i>
+                                    <span>${dayName}</span>
+                                    ${isToday ? '<span class="today-badge">Tänään</span>' : ''}
+                                    <span style="margin-left: auto; font-size: 0.8rem; opacity: 0.7;">
+                                        ${dayExams.length} koe${dayExams.length > 1 ? 'ta' : ''}
                                     </span>
                                 </div>
-                                ${isToday ? '<span class="today-badge">Tänään</span>' : ''}
+                                <div class="exam-day-events">
+                                    ${dayExams.map(exam => {
+                                        const examDate = new Date(exam.date);
+                                        const isPastExam = examDate < today;
+                                        const isTodayExam = examDate.toDateString() === today.toDateString();
+                                        
+                                        return `
+                                            <div class="exam-event-item ${isPastExam ? 'past' : ''} ${isTodayExam ? 'today' : ''}">
+                                                <div class="exam-event-time">
+                                                    ${exam.time ? exam.time : 'Klo?'}
+                                                </div>
+                                                <div class="exam-event-details">
+                                                    <span class="exam-event-subject">${exam.subject}</span>
+                                                    <span class="exam-event-topic">${exam.topic}</span>
+                                                    ${exam.notes ? `
+                                                        <span class="exam-event-notes" style="display: block; font-size: 0.8rem; opacity: 0.7; margin-top: 0.2rem;">
+                                                            <i class="fas fa-sticky-note"></i> ${exam.notes}
+                                                        </span>
+                                                    ` : ''}
+                                                    <span class="exam-event-importance importance-${exam.importance}">
+                                                        ${exam.importance === 'normal' ? 'Normaali' : exam.importance === 'important' ? 'Tärkeä' : 'Erittäin tärkeä'}
+                                                    </span>
+                                                    <div class="exam-event-actions">
+                                                        <button onclick="editExamFromWeek(${exam.id})" class="exam-event-action-btn edit-exam-btn">
+                                                            <i class="fas fa-edit"></i> Muokkaa
+                                                        </button>
+                                                        <button onclick="deleteExamFromWeek(${exam.id})" class="exam-event-action-btn delete-exam-btn">
+                                                            <i class="fas fa-trash"></i> Poista
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
                             </div>
                         `;
                     }).join('')}
                 </div>
             `}
             
-            <div class="exam-week-actions">
-                <button onclick="addExamsToWeek()" class="add-exams-btn">
-                    <i class="fas fa-plus"></i> Lisää kokeita koeviikolle
+            <div class="exam-week-actions-modal three-buttons">
+                <button onclick="openAddExamToWeekModal()" class="add-exams-modal-btn">
+                    <i class="fas fa-plus-circle"></i> Lisää koe
                 </button>
-                <button onclick="clearExamWeek()" class="clear-exam-week-btn">
+                <button onclick="editExamWeek()" class="exam-week-edit-btn">
+                    <i class="fas fa-edit"></i> Muokkaa koeviikkoa
+                </button>
+                <button onclick="clearExamWeek()" class="clear-exam-week-modal-btn">
                     <i class="fas fa-trash"></i> Poista koeviikko
                 </button>
             </div>
@@ -2331,6 +2425,122 @@ function showExamWeekDetails() {
     // Näytä modal
     showCustomModal(modalContent);
 }
+
+
+// Avaa uuden kokeen lisäysmodaali
+function openAddExamToWeekModal() {
+    const modalContent = `
+        <div class="modal-header">
+            <h2>➕ Lisää uusi koe koeviikolle</h2>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="add-exam-header">
+                <i class="fas fa-calendar-plus" style="color: var(--accent-color); font-size: 1.5rem;"></i>
+                <h3>Uusi koe</h3>
+            </div>
+            
+            <div class="add-exam-info">
+                <p><strong>Koeviikko:</strong> ${new Date(examWeek.startDate).toLocaleDateString('fi-FI')} - ${new Date(examWeek.endDate).toLocaleDateString('fi-FI')}</p>
+                <p>Koe lisätään automaattisesti valitulle koeviikolle</p>
+            </div>
+            
+            <div class="edit-exam-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="newExamSubject">Aine: *</label>
+                        <input type="text" id="newExamSubject" class="form-control" placeholder="Matematiikka" list="subjectList" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newExamDate">Päivämäärä: *</label>
+                        <input type="date" id="newExamDate" class="form-control" value="${examWeek.startDate}" min="${examWeek.startDate}" max="${examWeek.endDate}">
+                    </div>
+                </div>
+                
+                <div class="form-group full-width">
+                    <label for="newExamTopic">Aihe/alue: *</label>
+                    <input type="text" id="newExamTopic" class="form-control" placeholder="Esimerkiksi: Differentiaalilaskenta, Toisen maailmansodan syyt..." required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="newExamImportance">Tärkeys:</label>
+                        <select id="newExamImportance" class="form-control">
+                            <option value="normal">Normaali</option>
+                            <option value="important">Tärkeä</option>
+                            <option value="critical">Erittäin tärkeä</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="newExamTime">Kellonaika (valinnainen):</label>
+                        <input type="time" id="newExamTime" class="form-control">
+                    </div>
+                </div>
+                
+                <div class="form-group full-width">
+                    <label for="newExamNotes">Muistiinpanot (valinnainen):</label>
+                    <textarea id="newExamNotes" class="form-control" placeholder="Lisää tähän muistiinpanoja kokeesta..." rows="2"></textarea>
+                </div>
+                
+                <div class="edit-exam-actions">
+                    <button onclick="saveNewExamToWeek()" class="save-exam-btn">
+                        <i class="fas fa-plus-circle"></i> Lisää koe koeviikolle
+                    </button>
+                    <button onclick="closeModal()" class="cancel-exam-btn">
+                        <i class="fas fa-times"></i> Peruuta
+                    </button>
+                </div>
+                
+                <div class="quick-add-shortcuts">
+                    <button onclick="fillExamForm('math')" class="quick-shortcut-btn quick-shortcut-secondary">
+                        <i class="fas fa-calculator"></i> Matematiikka
+                    </button>
+                    <button onclick="fillExamForm('finnish')" class="quick-shortcut-btn quick-shortcut-secondary">
+                        <i class="fas fa-book"></i> Äidinkieli
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    showCustomModal(modalContent);
+    
+    // Fokusoi ensimmäiseen kenttään
+    setTimeout(() => {
+        document.getElementById('newExamSubject').focus();
+    }, 300);
+}
+
+// Täytä lomake esivalinnoilla
+function fillExamForm(type) {
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const subjectMap = {
+        'math': {
+            subject: 'Matematiikka',
+            topic: 'Differentiaalilaskenta ja integraalilaskenta',
+            importance: 'important'
+        },
+        'finnish': {
+            subject: 'Äidinkieli',
+            topic: 'Kirjoitelma ja kielioppi',
+            importance: 'critical'
+        }
+    };
+    
+    const preset = subjectMap[type];
+    if (preset) {
+        document.getElementById('newExamSubject').value = preset.subject;
+        document.getElementById('newExamTopic').value = preset.topic;
+        document.getElementById('newExamImportance').value = preset.importance;
+        document.getElementById('newExamDate').value = tomorrow.toISOString().split('T')[0];
+        
+        showToast(`✅ ${preset.subject}-lomake täytetty!`);
+    }
+}
+
 
 function showCustomModal(content) {
     // Poista olemassa oleva custom modal jos on
@@ -2385,6 +2595,305 @@ function clearExamWeek() {
         closeModal();
         showToast('🗑️ Koeviikko poistettu');
     }
+}
+
+// Uusi funktio koeviikon muokkaamiseen
+function editExamWeek() {
+    const modalContent = `
+        <div class="modal-header">
+            <h2>✏️ Muokkaa koeviikkoa</h2>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="edit-dates-form">
+                <div class="edit-dates-row">
+                    <div class="edit-date-group">
+                        <label for="editExamWeekStart">Alkaa:</label>
+                        <input type="date" id="editExamWeekStart" class="edit-date-input" value="${examWeek.startDate}">
+                    </div>
+                    <div class="edit-date-group">
+                        <label for="editExamWeekEnd">Päättyy:</label>
+                        <input type="date" id="editExamWeekEnd" class="edit-date-input" value="${examWeek.endDate}">
+                    </div>
+                </div>
+                
+                <div class="exam-week-info-preview">
+                    <h4>Koeviikon tiedot:</h4>
+                    <div class="preview-stats">
+                        <div class="preview-stat">
+                            <span class="preview-label">Kokeita:</span>
+                            <span class="preview-value">${examList.filter(exam => {
+                                const examDate = new Date(exam.date);
+                                const startDate = new Date(examWeek.startDate);
+                                const endDate = new Date(examWeek.endDate);
+                                return examDate >= startDate && examDate <= endDate;
+                            }).length}</span>
+                        </div>
+                        <div class="preview-stat">
+                            <span class="preview-label">Kesto:</span>
+                            <span class="preview-value" id="previewDuration">${calculateExamWeekDuration()} päivää</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="edit-actions">
+                    <button onclick="saveExamWeekEdit()" class="save-edit-btn">
+                        <i class="fas fa-save"></i> Tallenna muutokset
+                    </button>
+                    <button onclick="closeModal()" class="cancel-edit-btn">
+                        <i class="fas fa-times"></i> Peruuta
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    showCustomModal(modalContent);
+    
+    // Päivitä esikatselu reaaliaikaisesti
+    document.getElementById('editExamWeekStart').addEventListener('change', updatePreview);
+    document.getElementById('editExamWeekEnd').addEventListener('change', updatePreview);
+}
+
+function calculateExamWeekDuration() {
+    if (!examWeek.startDate || !examWeek.endDate) return 0;
+    
+    const start = new Date(examWeek.startDate);
+    const end = new Date(examWeek.endDate);
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 koska alku- ja loppupäivä mukaan
+    
+    return diffDays;
+}
+
+// Päivitä esikatselu
+function updatePreview() {
+    const startDate = document.getElementById('editExamWeekStart').value;
+    const endDate = document.getElementById('editExamWeekEnd').value;
+    
+    if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const diffTime = Math.abs(end - start);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        
+        document.getElementById('previewDuration').textContent = `${diffDays} päivää`;
+    }
+}
+
+function saveExamWeekEdit() {
+    const startDate = document.getElementById('editExamWeekStart').value;
+    const endDate = document.getElementById('editExamWeekEnd').value;
+    
+    if (!startDate || !endDate) {
+        showToast('❌ Aseta sekä alku- että päättymispäivä');
+        return;
+    }
+    
+    if (new Date(startDate) >= new Date(endDate)) {
+        showToast('❌ Päättymispäivän tulee olla alkupäivän jälkeen');
+        return;
+    }
+    
+    examWeek.startDate = startDate;
+    examWeek.endDate = endDate;
+    
+    localStorage.setItem('examWeek', JSON.stringify(examWeek));
+    updateExamWeekStatus();
+    renderExamWeekInfo();
+    closeModal();
+    showToast('✅ Koeviikon päivämäärät päivitetty!');
+}
+
+// Muokkaa kokeen tietoja
+function editExamFromWeek(examId) {
+    const exam = examList.find(e => e.id === examId);
+    if (!exam) return;
+    
+    const modalContent = `
+        <div class="modal-header">
+            <h2>✏️ Muokkaa koetta</h2>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="edit-exam-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editExamSubject">Aine:</label>
+                        <input type="text" id="editExamSubject" class="form-control" value="${exam.subject}" list="subjectList">
+                    </div>
+                    <div class="form-group">
+                        <label for="editExamDate">Päivämäärä:</label>
+                        <input type="date" id="editExamDate" class="form-control" value="${exam.date}">
+                    </div>
+                </div>
+                
+                <div class="form-group full-width">
+                    <label for="editExamTopic">Aihe/alue:</label>
+                    <input type="text" id="editExamTopic" class="form-control" value="${exam.topic}">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editExamImportance">Tärkeys:</label>
+                        <select id="editExamImportance" class="form-control">
+                            <option value="normal" ${exam.importance === 'normal' ? 'selected' : ''}>Normaali</option>
+                            <option value="important" ${exam.importance === 'important' ? 'selected' : ''}>Tärkeä</option>
+                            <option value="critical" ${exam.importance === 'critical' ? 'selected' : ''}>Erittäin tärkeä</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editExamTime">Kellonaika (valinnainen):</label>
+                        <input type="time" id="editExamTime" class="form-control" value="${exam.time || ''}">
+                    </div>
+                </div>
+                
+                <div class="edit-exam-actions">
+                    <button onclick="saveExamEdit(${examId})" class="save-exam-btn">
+                        <i class="fas fa-save"></i> Tallenna muutokset
+                    </button>
+                    <button onclick="closeModal()" class="cancel-exam-btn">
+                        <i class="fas fa-times"></i> Peruuta
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    showCustomModal(modalContent);
+}
+
+// Tallenna kokeen muutokset
+function saveExamEdit(examId) {
+    const subject = document.getElementById('editExamSubject').value.trim();
+    const date = document.getElementById('editExamDate').value;
+    const topic = document.getElementById('editExamTopic').value.trim();
+    const importance = document.getElementById('editExamImportance').value;
+    const time = document.getElementById('editExamTime').value;
+
+    if (subject && date && topic) {
+        examList = examList.map(exam => 
+            exam.id === examId 
+                ? { ...exam, subject, date, topic, importance, time }
+                : exam
+        );
+
+        localStorage.setItem('examList', JSON.stringify(examList));
+        updateExamStats();
+        updateExamCounter();
+        renderExamWeekInfo(); // Päivitä koeviikon näkymä
+        closeModal();
+        showToast("✅ Koe päivitetty!");
+    } else {
+        showToast("❌ Täytä pakolliset kentät");
+    }
+}
+
+// Poista koe koeviikolta
+function deleteExamFromWeek(examId) {
+    if (confirm('Haluatko varmasti poistaa tämän kokeen?')) {
+        examList = examList.filter(exam => exam.id !== examId);
+        localStorage.setItem('examList', JSON.stringify(examList));
+        updateExamStats();
+        updateExamCounter();
+        renderExamWeekInfo(); // Päivitä koeviikon näkymä
+        showToast("🗑️ Koe poistettu");
+    }
+}
+
+// Lisää uusi koe suoraan koeviikolle
+function addExamsToWeek() {
+    openAddExamToWeekModal();
+}
+
+// Tallenna uusi koe koeviikolle
+function saveNewExamToWeek() {
+    const subject = document.getElementById('newExamSubject').value.trim();
+    const date = document.getElementById('newExamDate').value;
+    const topic = document.getElementById('newExamTopic').value.trim();
+    const importance = document.getElementById('newExamImportance').value;
+    const time = document.getElementById('newExamTime').value;
+    const notes = document.getElementById('newExamNotes').value.trim();
+
+    if (!subject || !date || !topic) {
+        showToast('❌ Täytä pakolliset kentät (merkitty *)');
+        return;
+    }
+
+    // Tarkista että koe on koeviikon sisällä
+    const examDate = new Date(date);
+    const startDate = new Date(examWeek.startDate);
+    const endDate = new Date(examWeek.endDate);
+    
+    if (examDate < startDate || examDate > endDate) {
+        showToast('❌ Valitse päivämäärä koeviikon sisältä');
+        return;
+    }
+
+    const exam = {
+        id: Date.now(),
+        subject,
+        date,
+        topic,
+        importance,
+        time: time || null,
+        notes: notes || null,
+        createdAt: new Date().toISOString()
+    };
+    
+    examList.push(exam);
+    localStorage.setItem('examList', JSON.stringify(examList));
+    updateExamStats();
+    updateExamCounter();
+    renderExamWeekInfo();
+    closeModal();
+    showToast("🎉 Koe lisätty koeviikolle!");
+}
+
+function quickAddExamToWeek() {
+    const subject = document.getElementById('quickExamSubject').value.trim();
+    const date = document.getElementById('quickExamDate').value;
+    const topic = document.getElementById('quickExamTopic').value.trim();
+
+    if (subject && date && topic) {
+        // Tarkista että koe on koeviikon sisällä
+        const examDate = new Date(date);
+        const startDate = new Date(examWeek.startDate);
+        const endDate = new Date(examWeek.endDate);
+        
+        if (examDate < startDate || examDate > endDate) {
+            showToast('❌ Koe ei ole koeviikon sisällä');
+            return;
+        }
+
+        const exam = {
+            id: Date.now(),
+            subject,
+            date,
+            topic,
+            importance: 'normal',
+            createdAt: new Date().toISOString()
+        };
+        
+        examList.push(exam);
+        localStorage.setItem('examList', JSON.stringify(examList));
+        updateExamStats();
+        updateExamCounter();
+        renderExamWeekInfo();
+        showToast("📅 Koe lisätty koeviikolle!");
+        
+        // Tyhjennä kentät
+        clearQuickAddForm();
+    } else {
+        showToast("❌ Täytä pakolliset kentät");
+    }
+}
+
+// Tyhjennä pikalomake
+function clearQuickAddForm() {
+    document.getElementById('quickExamSubject').value = '';
+    document.getElementById('quickExamTopic').value = '';
+    document.getElementById('quickExamSubject').focus();
 }
 
 // ========== KOTITEHTÄVIEN HALLINTA ==========
@@ -2945,7 +3454,7 @@ function updateGradeStats() {
     // Lyhennä teksti tarvittaessa
     if (bestSubjectElement) {
         if (bestSubject.length > 10) {
-            bestSubjectElement.textContent = bestSubject.substring(0, 10) + '...';
+            bestSubjectElement.textContent = bestSubject.substring(0, 8) + '...';
             bestSubjectElement.title = bestSubject; // Tooltip koko nimelle
         } else {
             bestSubjectElement.textContent = bestSubject;
