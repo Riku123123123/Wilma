@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeApp() {
-    console.log('Alustetaan sovellus...');
     
     // Intro näkyy vain ensimmäisellä kerralla
     if (sessionStorage.getItem('introShown')) {
@@ -48,12 +47,10 @@ function initializeApp() {
     setInterval(updateWeather, 3600000);
     setInterval(updateNextLessonInfo, 60000);
     
-    console.log('Sovellus alustettu onnistuneesti');
 }
 
 // Lisää tämä uusi funktio bottom-navigaation alustukseen
 function initializeBottomNav() {
-    console.log('Alustetaan bottom-navigaatio...');
     
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(item => {
@@ -67,7 +64,6 @@ function initializeBottomNav() {
             this.classList.add('active');
             
             const text = this.querySelector('span').textContent;
-            console.log('Navigointi:', text);
             
             // Toteuta navigointi
             switch(text) {
@@ -183,36 +179,99 @@ function updateFontSizeDisplay(size) {
     fontSizeValue.textContent = `${size}px`;
 }
 
-// Korvaa fontin vaihtokuuntelija tällä:
+// KORJATTU FONTIN VAIHTO - LISÄÄ TÄMÄ FUNKTIO
 function initializeFontListeners() {
-    const fontSelect = document.getElementById('fontSelect');
-    if (fontSelect) {
-        // Poista vanhat kuuntelijat
-        fontSelect.replaceWith(fontSelect.cloneNode(true));
+    
+    // Odota että DOM on valmis
+    setTimeout(() => {
+        const fontSelect = document.getElementById('fontSelect');
+        if (fontSelect) {
+            
+            // Poista vanhat kuuntelijat ensin
+            const newFontSelect = fontSelect.cloneNode(true);
+            fontSelect.parentNode.replaceChild(newFontSelect, fontSelect);
+            
+            // Lisää uusi kuuntelija uudelle elementille
+            document.getElementById('fontSelect').addEventListener('change', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const selectedFont = this.value;
+                
+                // Tallenna välittömästi
+                localStorage.setItem('font', selectedFont);
+                
+                // Päivitä fontti välittömästi
+                applyFontImmediately(selectedFont);
+            });
+            
+            // Aseta tallennettu fontti heti
+            const savedFont = localStorage.getItem('font');
+            if (savedFont) {
+                document.getElementById('fontSelect').value = savedFont;
+                applyFontImmediately(savedFont);
+            }
+            
+        } else {
+            console.error('Fonttivalitsinta ei löytynyt!');
+        }
+    }, 100);
+}
+
+function applyFontImmediately(fontFamily) {
+    
+    try {
+        // 1. Päivitä body fontti
+        document.body.style.fontFamily = fontFamily;
         
-        // Lisää uusi kuuntelija
-        document.getElementById('fontSelect').addEventListener('change', function() {
-            const selectedFont = this.value;
-            console.log('Fonttia vaihdetaan:', selectedFont);
-            
-            // Tallenna välittömästi
-            localStorage.setItem('font', selectedFont);
-            
-            // Päivitä näkymä
-            document.body.style.fontFamily = selectedFont;
-            updateAllFonts(selectedFont);
-            
-            // Varmista että muutos näkyy
-            setTimeout(() => {
-                document.body.style.fontFamily = selectedFont;
-            }, 50);
+        // 2. Päivitä kaikki tärkeät elementit
+        const selectors = [
+            'body',
+            '.modal',
+            '.modal-content',
+            '#settingsModal',
+            '.settings-content',
+            '.settings-tab',
+            '.setting-group',
+            'input',
+            'select',
+            'textarea',
+            'button',
+            '.btn',
+            '.nav-item',
+            '.day-card',
+            '.lesson',
+            '.tool-card',
+            '.homework-item',
+            '.exam-item',
+            '.grade-item',
+            '.note-item'
+        ];
+        
+        selectors.forEach(selector => {
+            try {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach(el => {
+                    el.style.fontFamily = fontFamily;
+                });
+            } catch (e) {
+                console.warn(`Ei voitu päivittää fonttia selectorille: ${selector}`);
+            }
         });
+        
+        // 3. Pakota uudelleenrenderöinti
+        document.body.style.display = 'none';
+        document.body.offsetHeight; // Trigger reflow
+        document.body.style.display = '';
+        
+        
+    } catch (error) {
+        console.error('Virhe fontin soveltamisessa:', error);
     }
 }
 
 function updateAllFonts(fontFamily) {
     try {
-        console.log('Päivitetään kaikkien elementtien fontit:', fontFamily);
         
         // 1. Päivitä body ensin
         document.body.style.fontFamily = fontFamily;
@@ -227,7 +286,11 @@ function updateAllFonts(fontFamily) {
             'input',
             'select',
             'textarea',
-            'button'
+            'button',
+            '.tools-section',
+            '.tool-card',
+            '.grade-item',
+            '.single-grade-item'
         ];
         
         elementsToUpdate.forEach(selector => {
@@ -246,15 +309,12 @@ function updateAllFonts(fontFamily) {
         document.body.offsetHeight; // Trigger reflow
         document.body.style.display = '';
         
-        console.log('Fontit päivitetty onnistuneesti');
-        
     } catch (error) {
         console.error('Kriittinen virhe fonttien päivittämisessä:', error);
     }
 }
 
 function loadFontSettings() {
-    console.log('Ladataan fonttiasetukset...');
     
     const savedFont = localStorage.getItem('font');
     const savedFontSize = localStorage.getItem('fontSize');
@@ -263,15 +323,16 @@ function loadFontSettings() {
     setTimeout(() => {
         try {
             if (savedFont) {
-                console.log('Asetetaan tallennettu fontti:', savedFont);
-                document.body.style.fontFamily = savedFont;
+                applyFontImmediately(savedFont);
                 
-                // Päivitä kaikki elementit varmuuden vuoksi
-                updateAllFonts(savedFont);
+                // Päivitä myös valitsin
+                const fontSelect = document.getElementById('fontSelect');
+                if (fontSelect) {
+                    fontSelect.value = savedFont;
+                }
             }
             
             if (savedFontSize) {
-                console.log('Asetetaan tallennettu fonttikoko:', savedFontSize);
                 document.body.style.fontSize = savedFontSize + 'px';
                 
                 // Päivitä myös input-kentän arvo
@@ -282,12 +343,11 @@ function loadFontSettings() {
                 }
             }
             
-            console.log('Fonttiasetukset ladattu onnistuneesti');
             
         } catch (error) {
             console.error('Virhe fonttiasetusten lataamisessa:', error);
         }
-    }, 100);
+    }, 200);
 }
 
 // Lataa lukujärjestysasetukset
@@ -346,7 +406,6 @@ function loadEventSettings() {
 
 // Lataa tallennetut asetukset - TÄYSIN UUSI TURVALLINEN VERSIO
 function loadSavedSettings() {
-    console.log('Ladataan tallennetut asetukset...');
     
     const savedTheme = localStorage.getItem('theme');
     const savedFont = localStorage.getItem('font');
@@ -355,24 +414,20 @@ function loadSavedSettings() {
     try {
         // Aseta teema (ei tarvitse DOM-elementtejä)
         if (savedTheme) {
-            console.log('Asetetaan teema:', savedTheme);
             applyTheme(savedTheme);
         }
 
         // Aseta fontti
         if (savedFont) {
-            console.log('Asetetaan fontti:', savedFont);
             document.body.style.fontFamily = savedFont;
             // updateAllFonts kutsutaan myöhemmin
         }
 
         // Aseta fonttikoko
         if (savedFontSize) {
-            console.log('Asetetaan fonttikoko:', savedFontSize);
             document.body.style.fontSize = savedFontSize + 'px';
         }
 
-        console.log('Perusasetukset ladattu onnistuneesti');
         
     } catch (error) {
         console.error('Virhe perusasetusten lataamisessa:', error);
@@ -390,7 +445,6 @@ function applyTheme(theme) {
 
 // Aseta tapahtumakuuntelijat - TURVALLINEN VERSIO
 function setupEventListeners() {
-    console.log('Asetetaan tapahtumakuuntelijat...');
     
     // Asetukset-nappi
     const settingsBtn = document.getElementById('settingsBtn');
@@ -419,6 +473,8 @@ function setupEventListeners() {
 
     initializeToolsSection();
 
+    initializeFontListeners();
+
     // Teeman vaihto - lisätään myöhemmin kun elementti on varmasti olemassa
     setTimeout(() => {
         const themeSelect = document.getElementById('themeSelect');
@@ -430,50 +486,25 @@ function setupEventListeners() {
         }
     }, 100);
 
-    // Fontin vaihto - lisätään myöhemmin
-    setTimeout(() => {
-        initializeFontListeners();
-        
-        // Fontin koko
-        const fontSize = document.getElementById('fontSize');
-        if (fontSize) {
-            fontSize.addEventListener('input', function() {
-                const newSize = this.value + 'px';
-                document.body.style.fontSize = newSize;
-                localStorage.setItem('fontSize', this.value);
-                updateFontSizeDisplay(this.value);
-                
-                // Pakota fontin päivitys
-                const currentFont = localStorage.getItem('font') || 'Poppins, sans-serif';
-                updateAllFonts(currentFont);
-            });
-        }
-    }, 500);
-
-    // Fontin koko - lisätään myöhemmin
-    setTimeout(() => {
-        const fontSize = document.getElementById('fontSize');
-        if (fontSize) {
-            fontSize.addEventListener('input', function() {
-                const newSize = this.value + 'px';
-                document.body.style.fontSize = newSize;
-                localStorage.setItem('fontSize', this.value);
-                updateFontSizeDisplay(this.value);
-                updateAllFonts(document.body.style.fontFamily);
-            });
-        }
-    }, 100);
-
-    // Ruokalistan tallennus
-    const saveMeals = document.getElementById('saveMeals');
-    if (saveMeals) {
-        saveMeals.addEventListener('click', saveMeals);
+    const fontSize = document.getElementById('fontSize');
+    if (fontSize) {
+        fontSize.addEventListener('input', function() {
+            const newSize = this.value + 'px';
+            document.body.style.fontSize = newSize;
+            localStorage.setItem('fontSize', this.value);
+            updateFontSizeDisplay(this.value);
+        });
     }
 
-    // Lukujärjestyksen muokkaus
-    const saveSchedule = document.getElementById('saveSchedule');
-    if (saveSchedule) {
-        saveSchedule.addEventListener('click', saveSchedule);
+    // Ruokalistan tallennus
+    const saveMealsBtn = document.getElementById('saveMeals');
+    if (saveMealsBtn) {
+        saveMealsBtn.addEventListener('click', saveMeals);
+    }
+
+    const saveScheduleBtn = document.getElementById('saveSchedule');
+    if (saveScheduleBtn) {
+        saveScheduleBtn.addEventListener('click', saveSchedule);
     }
 
     // Aineiden värit
@@ -483,19 +514,19 @@ function setupEventListeners() {
     }
 
     // Jakamis- ja vientitoiminnot
-    const exportSchedule = document.getElementById('exportSchedule');
-    if (exportSchedule) {
-        exportSchedule.addEventListener('click', exportSchedule);
+    const exportScheduleBtn = document.getElementById('exportSchedule');
+    if (exportScheduleBtn) {
+        exportScheduleBtn.addEventListener('click', exportSchedule);
     }
 
-    const importSchedule = document.getElementById('importSchedule');
-    if (importSchedule) {
-        importSchedule.addEventListener('click', importSchedule);
+    const importScheduleBtn = document.getElementById('importSchedule');
+    if (importScheduleBtn) {
+        importScheduleBtn.addEventListener('click', importSchedule);
     }
 
-    const applyImportedSchedule = document.getElementById('applyImportedSchedule');
-    if (applyImportedSchedule) {
-        applyImportedSchedule.addEventListener('click', applyImportedSchedule);
+    const applyImportedScheduleBtn = document.getElementById('applyImportedSchedule');
+    if (applyImportedScheduleBtn) {
+        applyImportedScheduleBtn.addEventListener('click', applyImportedSchedule);
     }
 
     // Periodivalitsin (sivun yläreunan)
@@ -541,7 +572,6 @@ function setupEventListeners() {
         }
     });
 
-    console.log('Tapahtumakuuntelijat asetettu onnistuneesti');
 }
 
 // ========== LUKUJÄRJESTYS DATA ==========
@@ -1117,7 +1147,6 @@ function showSlotContextMenu(event, slotNumber) {
 function closeContextMenu() {
     const menu = document.getElementById('slotContextMenu');
     if (menu) {
-        console.log('closeContextMenu: poistetaan valikko');
         menu.remove();
     }
 }
@@ -1504,39 +1533,51 @@ function renderScheduleEditor() {
 }
 
 function saveSchedule() {
-    // määritä mille periodille tallennetaan (editorin valinta)
-    const editSelect = document.getElementById('editPeriodSelect');
-    const targetPeriod = editSelect ? parseInt(editSelect.value) : currentScheduleSlot || 1;
+    try {
+        // Määritä mille periodille tallennetaan
+        const editSelect = document.getElementById('editPeriodSelect');
+        const targetPeriod = editSelect ? parseInt(editSelect.value) : currentScheduleSlot;
+        
+        const updatedSubjects = {};
+        
+        // Kerää kaikkien 7 rivin tiedot
+        for (let i = 1; i <= 7; i++) {
+            const selectEl = document.getElementById(`subj-color-${i}`);
+            if (!selectEl) {
+                console.error(`Elementtiä subj-color-${i} ei löytynyt`);
+                continue;
+            }
+            
+            const selectedName = selectEl.options[selectEl.selectedIndex].text;
+            const colorVal = selectEl.value;
 
-    const updatedSubjects = {};
-    for (let i = 1; i <= 7; i++) {
-        const selectEl = document.getElementById(`subj-color-${i}`);
-        const selectedName = selectEl.options[selectEl.selectedIndex].text;
-        const colorVal = selectEl.value;
+            updatedSubjects[i] = {
+                name: colorVal === "default" ? "(Ei asetettu)" : selectedName,
+                code: document.getElementById(`subj-code-${i}`)?.value || "",
+                teacher: document.getElementById(`subj-teacher-${i}`)?.value || "",
+                room: document.getElementById(`subj-room-${i}`)?.value || "",
+                color: colorVal === "default" ? "default" : colorVal
+            };
+        }
 
-        updatedSubjects[i] = {
-            name: colorVal === "default" ? "(Ei asetettu)" : selectedName,
-            code: document.getElementById(`subj-code-${i}`).value || "",
-            teacher: document.getElementById(`subj-teacher-${i}`).value || "",
-            room: document.getElementById(`subj-room-${i}`).value || "",
-            color: colorVal === "default" ? "default" : colorVal
-        };
+        // Päivitä globaali subjects
+        subjects = updatedSubjects;
+        localStorage.setItem("customSubjects", JSON.stringify(subjects));
+
+        // Tallenna periodille
+        savePeriodSettings(targetPeriod);
+
+        // Päivitä näkymä
+        generateTimetable();
+        updateStatistics();
+        updateActiveSlot();
+
+        showToast(`💾 Lukujärjestys tallennettu periodille ${targetPeriod}`);
+        
+    } catch (error) {
+        console.error('Virhe tallennuksessa:', error);
+        showToast('❌ Virhe lukujärjestyksen tallentamisessa');
     }
-
-    // päivitä globaali subjects ja tallennus
-    subjects = updatedSubjects;
-    localStorage.setItem("customSubjects", JSON.stringify(subjects));
-
-    // Tallenna suoraan valitulle periodille
-    savePeriodSettings(targetPeriod);
-
-    generateTimetable();
-    updateStatistics();
-
-    // Päivitä slot UI jos näkyvissä
-    updateActiveSlot();
-
-    showToast(`📅 Lukujärjestys tallennettu periodille ${targetPeriod}`);
 }
 
 // ========== RUOKALISTA ==========
@@ -1576,16 +1617,54 @@ function updateMeals() {
     }
 }
 
-// ========== JAKAMINEN JA VIENTI ==========
+// ========== LUKUJÄRJESTYKSEN JAKAMINEN - PUUTTUVAT FUNKTIOT ==========
+
 function exportSchedule() {
-    const scheduleData = JSON.stringify(subjects, null, 2);
-    document.getElementById("scheduleData").value = scheduleData;
-    navigator.clipboard.writeText(scheduleData).then(() => {
-        showToast("📋 Lukujärjestys kopioitu leikepöydälle!");
-    }).catch(() => {
-        document.getElementById("scheduleData").select();
-        showToast("📤 Lukujärjestys valittu - kopioi se leikepöydälle (Ctrl+C)");
-    });
+    try {
+        // Hae nykyisen periodin asetukset
+        const periodSelect = document.getElementById('periodSelect');
+        const currentPeriod = periodSelect ? parseInt(periodSelect.value) : currentScheduleSlot;
+        
+        const scheduleData = localStorage.getItem(`periodSettings_${currentPeriod}`);
+        if (!scheduleData) {
+            showToast('❌ Ei tallennettua lukujärjestystä');
+            return;
+        }
+        
+        const parsedData = JSON.parse(scheduleData);
+        const exportData = {
+            period: currentPeriod,
+            subjects: parsedData.subjects,
+            exportedAt: new Date().toISOString(),
+            version: '2.0'
+        };
+        
+        const jsonString = JSON.stringify(exportData, null, 2);
+        
+        // Aseta tekstikenttään
+        const scheduleDataElement = document.getElementById('scheduleData');
+        if (scheduleDataElement) {
+            scheduleDataElement.value = jsonString;
+        }
+        
+        // Kopioi leikepöydälle
+        navigator.clipboard.writeText(jsonString).then(() => {
+            showToast('📤 Lukujärjestys kopioitu leikepöydälle!');
+        }).catch(() => {
+            // Fallback
+            const tempTextarea = document.createElement('textarea');
+            tempTextarea.value = jsonString;
+            document.body.appendChild(tempTextarea);
+            tempTextarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempTextarea);
+            showToast('📤 Lukujärjestys kopioitu!');
+        });
+        
+    } catch (error) {
+        console.error('Virhe viennissä:', error);
+        showToast('❌ Virhe lukujärjestyksen viennissä');
+    }
 }
 
 function importSchedule() {
@@ -1599,8 +1678,16 @@ function importSchedule() {
         if (file) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                document.getElementById("scheduleData").value = e.target.result;
-                showToast("📁 Tiedosto ladattu - käytä tuotua järjestystä");
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    const scheduleDataElement = document.getElementById('scheduleData');
+                    if (scheduleDataElement) {
+                        scheduleDataElement.value = JSON.stringify(importedData, null, 2);
+                    }
+                    showToast('📁 Tiedosto ladattu - käytä tuotua järjestystä');
+                } catch (error) {
+                    showToast('❌ Virheellinen tiedostomuoto');
+                }
             };
             reader.readAsText(file);
         }
@@ -1613,39 +1700,82 @@ function importSchedule() {
 
 function applyImportedSchedule() {
     try {
-        const importedData = document.getElementById("scheduleData").value.trim();
-        if (!importedData) {
-            showToast("❌ Liitä ensin lukujärjestysdata");
+        const importedDataText = document.getElementById('scheduleData').value.trim();
+        if (!importedDataText) {
+            showToast('❌ Liitä ensin lukujärjestysdata');
             return;
         }
         
-        const newSubjects = JSON.parse(importedData);
-        if (typeof newSubjects === 'object' && Object.keys(newSubjects).length >= 7) {
-            let isValid = true;
-            for (let i = 1; i <= 7; i++) {
-                if (!newSubjects[i] || typeof newSubjects[i] !== 'object') {
-                    isValid = false;
-                    break;
-                }
-            }
-            
-            if (isValid) {
-                subjects = newSubjects;
-                localStorage.setItem("customSubjects", JSON.stringify(subjects));
-                generateTimetable();
-                updateStatistics();
-                showToast("📥 Lukujärjestys ladattu onnistuneesti!");
-                setTimeout(() => {
-                    document.getElementById('settingsModal').style.display = "none";
-                }, 1500);
-            } else {
-                showToast("❌ Virheellinen lukujärjestysmuoto");
-            }
+        const importedData = JSON.parse(importedDataText);
+        
+        let subjectsData;
+        
+        // Tarkista datan muoto
+        if (importedData.subjects && typeof importedData.subjects === 'object') {
+            // Uusi muoto: { period: 2, subjects: { ... } }
+            subjectsData = importedData.subjects;
+        } else if (typeof importedData === 'object' && importedData['1'] && importedData['1'].name) {
+            // Vanha muoto: suora subjects-objekti
+            subjectsData = importedData;
         } else {
-            showToast("❌ Tarkista lukujärjestysdata");
+            showToast('❌ Tuntematon lukujärjestysmuoto');
+            return;
         }
+        
+        // Tarkista että data on kelvollinen
+        if (!subjectsData || typeof subjectsData !== 'object') {
+            showToast('❌ Virheellinen lukujärjestysdata');
+            return;
+        }
+        
+        // Varmista että kaikki 7 riviä on olemassa
+        const completeSubjects = {};
+        for (let i = 1; i <= 7; i++) {
+            if (subjectsData[i]) {
+                completeSubjects[i] = {
+                    name: subjectsData[i].name || "(Ei asetettu)",
+                    code: subjectsData[i].code || "",
+                    teacher: subjectsData[i].teacher || "",
+                    room: subjectsData[i].room || "",
+                    color: subjectsData[i].color || "default"
+                };
+            } else {
+                // Täytä puuttuvat rivit oletusarvoilla
+                completeSubjects[i] = { 
+                    name: "(Ei asetettu)", 
+                    code: "", 
+                    teacher: "", 
+                    room: "", 
+                    color: "default" 
+                };
+            }
+        }
+        
+        // Päivitä globaali subjects
+        subjects = completeSubjects;
+        localStorage.setItem("customSubjects", JSON.stringify(subjects));
+        
+        // Tallenna nykyiseen periodiin
+        const periodSelect = document.getElementById('periodSelect');
+        const currentPeriod = periodSelect ? parseInt(periodSelect.value) : currentScheduleSlot;
+        savePeriodSettings(currentPeriod);
+        
+        // Päivitä näkymä
+        generateTimetable();
+        updateStatistics();
+        
+        showToast('✅ Tuotu lukujärjestys ladattu onnistuneesti!');
+        
+        // Sulje asetukset 2 sekunnin kuluttua
+        setTimeout(() => {
+            const settingsModal = document.getElementById('settingsModal');
+            if (settingsModal) {
+                settingsModal.style.display = "none";
+            }
+        }, 2000);
+        
     } catch (error) {
-        showToast("❌ Virhe lukujärjestyksen lataamisessa");
+        showToast('❌ Virhe lukujärjestyksen lataamisessa: ' + error.message);
     }
 }
 
@@ -1780,7 +1910,6 @@ function openInternalGame(game) {
     const rpsGame = document.getElementById("rpsGame");
     if (rpsGame) {
         rpsGame.style.display = game === "rps" ? "block" : "none";
-        console.log('KPS-peli avattu:', game);
     } else {
         console.error('KPS-peliä ei löytynyt');
     }
@@ -1792,7 +1921,6 @@ function initializeGameCards() {
     gameCards.forEach(card => {
         card.addEventListener('click', function() {
             const gameText = this.querySelector('p').textContent;
-            console.log('Pelikorttia klikattu:', gameText);
             
             switch(gameText) {
                 case 'Kivi-paperi-sakset':
@@ -1828,7 +1956,7 @@ function initializeToolCards() {
                            this.className.includes('grade-card') ? 'grade' :
                            this.className.includes('notes-card') ? 'notes' : 'unknown';
             
-            console.log('Työkalukorttia klikattu:', toolType);
+             ('Työkalukorttia klikattu:', toolType);
             
             switch(toolType) {
                 case 'homework':
@@ -1918,20 +2046,16 @@ function toggleToolsSection(event) {
     
     const isCollapsed = toolsSection.classList.contains('collapsed');
     
-    console.log('ToggleToolsSection kutsuttu, nykyinen tila:', isCollapsed ? 'suljettu' : 'auki');
-    
     if (isCollapsed) {
         // Avaa työkalut
         toolsSection.classList.remove('collapsed');
         toolsContent.style.display = 'block';
         toggleIcon.classList.replace('fa-chevron-down', 'fa-chevron-up');
-        console.log('Työkalut avattu');
     } else {
         // Sulje työkalut
         toolsSection.classList.add('collapsed');
         toolsContent.style.display = 'none';
         toggleIcon.classList.replace('fa-chevron-up', 'fa-chevron-down');
-        console.log('Työkalut suljettu');
     }
     
     // Sallii uuden klikkauksen 300ms kuluttua
@@ -1941,7 +2065,6 @@ function toggleToolsSection(event) {
 }
 
 function initializeToolsSection() {
-    console.log('Alustetaan tools-section...');
     
     const toolsHeader = document.querySelector('.tools-header');
     if (!toolsHeader) {
@@ -1955,11 +2078,9 @@ function initializeToolsSection() {
     
     // Lisää uusi kuuntelija
     newToolsHeader.addEventListener('click', function(e) {
-        console.log('Tools-header klikattu - kutsutaan toggleToolsSection');
         toggleToolsSection(e);
     }, { once: false });
     
-    console.log('Tools-section alustettu onnistuneesti');
 }
 
 // ========== KOEVIKKO-OMINAISUUS ==========
@@ -2437,8 +2558,10 @@ function editHomework(id) {
         document.getElementById('homeworkDueDate').value = homework.dueDate;
         document.getElementById('homeworkPriority').value = homework.priority;
         
-        deleteHomework(id);
-        showToast("✏️ Muokkaa tehtävää ja tallenna uudelleen");
+        // POISTA: deleteHomework(id);
+        window.editingHomeworkId = id;
+        
+        showToast("✏️ Muokkaa tehtävää ja paina 'Lisää tehtävä' tallentaaksesi");
     }
 }
 
@@ -2487,20 +2610,39 @@ function addExam() {
     const importance = document.getElementById('examImportance').value;
 
     if (subject && date && topic) {
-        const exam = {
-            id: Date.now(),
-            subject,
-            date,
-            topic,
-            importance,
-            createdAt: new Date().toISOString()
-        };
+        // Tarkista onko muokkaus vai uusi lisäys
+        if (window.editingExamId) {
+            // Päivitä olemassa oleva koe
+            examList = examList.map(exam => 
+                exam.id === window.editingExamId 
+                    ? { ...exam, subject, date, topic, importance }
+                    : exam
+            );
+            delete window.editingExamId;
+            showToast("✅ Koe päivitetty!");
+        } else {
+            // Lisää uusi koe
+            const exam = {
+                id: Date.now(),
+                subject,
+                date,
+                topic,
+                importance,
+                createdAt: new Date().toISOString()
+            };
+            examList.push(exam);
+            showToast("📅 Koe lisätty!");
+        }
 
-        examList.push(exam);
         localStorage.setItem('examList', JSON.stringify(examList));
         renderExamList();
         updateExamStats();
         updateExamCounter();
+        
+        // Tyhjennä kentät
+        document.getElementById('examSubject').value = '';
+        document.getElementById('examDate').value = '';
+        document.getElementById('examTopic').value = '';
         
         // Tarkista onko koe koeviikolla
         if (examWeek.active && examWeek.startDate && examWeek.endDate) {
@@ -2509,21 +2651,13 @@ function addExam() {
             const endDate = new Date(examWeek.endDate);
             
             if (examDate >= startDate && examDate <= endDate) {
-                renderExamWeekInfo(); // Päivitä koeviikon tiedot
+                renderExamWeekInfo();
             }
         }
-        
-        // Tyhjennä kentät
-        document.getElementById('examSubject').value = '';
-        document.getElementById('examDate').value = '';
-        document.getElementById('examTopic').value = '';
-        
-        showToast("📅 Koe lisätty!");
     } else {
         showToast("❌ Täytä kaikki kentät");
     }
 }
-
 function renderExamList() {
     const container = document.getElementById('examList');
     if (!container) return;
@@ -2601,7 +2735,7 @@ function editExam(id) {
         document.getElementById('examTopic').value = exam.topic;
         document.getElementById('examImportance').value = exam.importance;
         
-        deleteExam(id);
+         window.editingExamId = id;
         showToast("✏️ Muokkaa koetta ja tallenna uudelleen");
     }
 }
@@ -2650,15 +2784,29 @@ function addGrade() {
     const description = document.getElementById('gradeDescription').value.trim();
 
     if (subject && value >= 4 && value <= 10) {
-        const grade = {
-            id: Date.now(),
-            subject,
-            value,
-            description,
-            date: new Date().toISOString()
-        };
+        // Tarkista onko muokkaus vai uusi lisäys
+        if (window.editingGradeId) {
+            // Päivitä olemassa oleva arvosana
+            gradeList = gradeList.map(grade => 
+                grade.id === window.editingGradeId 
+                    ? { ...grade, subject, value, description }
+                    : grade
+            );
+            delete window.editingGradeId;
+            showToast("✅ Arvosana päivitetty!");
+        } else {
+            // Lisää uusi arvosana
+            const grade = {
+                id: Date.now(),
+                subject,
+                value,
+                description,
+                date: new Date().toISOString()
+            };
+            gradeList.push(grade);
+            showToast("📊 Arvosana lisätty!");
+        }
 
-        gradeList.push(grade);
         localStorage.setItem('gradeList', JSON.stringify(gradeList));
         renderGradeList();
         updateGradeStats();
@@ -2669,7 +2817,6 @@ function addGrade() {
         document.getElementById('gradeValue').value = '';
         document.getElementById('gradeDescription').value = '';
         
-        showToast("📊 Arvosana lisätty!");
     } else {
         showToast("❌ Täytä aine ja arvosana (4-10)");
     }
@@ -2703,19 +2850,47 @@ function renderGradeList() {
         const average = grades.reduce((sum, grade) => sum + grade.value, 0) / grades.length;
         const gradeClass = getGradeClass(average);
         
+        // Järjestä arvosanat uusimmat ensin
+        const sortedGrades = [...grades].sort((a, b) => new Date(b.date) - new Date(a.date));
+        
         return `
             <div class="grade-item ${gradeClass}">
                 <div class="grade-header">
                     <strong>${subject}</strong>
                     <span class="grade-date">Keskiarvo: ${average.toFixed(2)}</span>
                 </div>
-                <div class="grade-description">
-                    ${grades.map(grade => `
-                        <span class="grade-badge">${grade.value} ${grade.description ? `- ${grade.description}` : ''}</span>
-                    `).join('')}
+                
+                <div class="grade-list-container">
+                    ${sortedGrades.map(grade => {
+                        const date = new Date(grade.date).toLocaleDateString('fi-FI');
+                        const individualGradeClass = getGradeClass(grade.value);
+                        
+                        return `
+                            <div class="single-grade-item ${individualGradeClass}">
+                                <div class="single-grade-header">
+                                    <div class="single-grade-info">
+                                        <span class="single-grade-value">${grade.value}</span>
+                                        <span class="single-grade-date">${date}</span>
+                                        ${grade.description ? `
+                                            <span class="single-grade-description">${grade.description}</span>
+                                        ` : ''}
+                                    </div>
+                                    <div class="single-grade-actions">
+                                        <button onclick="editGrade(${grade.id})" class="edit-btn" title="Muokkaa">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button onclick="deleteSingleGrade(${grade.id})" class="delete-btn" title="Poista">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
                 </div>
+                
                 <div class="grade-actions">
-                    <button onclick="deleteSubjectGrades('${subject}')" class="delete-btn">🗑️ Poista aine</button>
+                    <button onclick="deleteSubjectGrades('${subject}')" class="delete-btn">🗑️ Poista koko aine</button>
                 </div>
             </div>
         `;
@@ -2739,29 +2914,47 @@ function updateGradeStats() {
 
     const average = gradeList.reduce((sum, grade) => sum + grade.value, 0) / gradeList.length;
     
-    // Etsi paras aine
-    const gradesBySubject = {};
+    // Etsi paras keskiarvo
+    const subjectAverages = {};
     gradeList.forEach(grade => {
-        if (!gradesBySubject[grade.subject]) {
-            gradesBySubject[grade.subject] = [];
+        if (!subjectAverages[grade.subject]) {
+            subjectAverages[grade.subject] = { sum: 0, count: 0 };
         }
-        gradesBySubject[grade.subject].push(grade);
+        subjectAverages[grade.subject].sum += grade.value;
+        subjectAverages[grade.subject].count++;
     });
 
     let bestSubject = '-';
     let bestAverage = 0;
     
-    Object.entries(gradesBySubject).forEach(([subject, grades]) => {
-        const subjectAverage = grades.reduce((sum, grade) => sum + grade, 0) / grades.length;
+    Object.entries(subjectAverages).forEach(([subject, data]) => {
+        const subjectAverage = data.sum / data.count;
         if (subjectAverage > bestAverage) {
             bestAverage = subjectAverage;
             bestSubject = subject;
         }
     });
 
-    document.getElementById('averageGrade').textContent = average.toFixed(2);
-    document.getElementById('totalGrades').textContent = gradeList.length;
-    document.getElementById('bestSubject').textContent = bestSubject.substring(0, 10) + (bestSubject.length > 10 ? '...' : '');
+    const averageGradeElement = document.getElementById('averageGrade');
+    const totalGradesElement = document.getElementById('totalGrades');
+    const bestSubjectElement = document.getElementById('bestSubject');
+    
+    if (averageGradeElement) averageGradeElement.textContent = average.toFixed(2);
+    if (totalGradesElement) totalGradesElement.textContent = gradeList.length;
+    
+    // Lyhennä teksti tarvittaessa
+    if (bestSubjectElement) {
+        if (bestSubject.length > 10) {
+            bestSubjectElement.textContent = bestSubject.substring(0, 10) + '...';
+            bestSubjectElement.title = bestSubject; // Tooltip koko nimelle
+        } else {
+            bestSubjectElement.textContent = bestSubject;
+            bestSubjectElement.title = '';
+        }
+        
+        // Varmista että fontti päivittyy
+        bestSubjectElement.style.fontFamily = document.body.style.fontFamily;
+    }
 }
 
 function deleteSubjectGrades(subject) {
@@ -2775,8 +2968,45 @@ function deleteSubjectGrades(subject) {
     }
 }
 
+function deleteSingleGrade(id) {
+    if (confirm('Haluatko varmasti poistaa tämän arvosanan?')) {
+        gradeList = gradeList.filter(grade => grade.id !== id);
+        localStorage.setItem('gradeList', JSON.stringify(gradeList));
+        renderGradeList();
+        updateGradeStats();
+        updateGradeCounter();
+        showToast("🗑️ Arvosana poistettu");
+    }
+}
+
 function updateGradeCounter() {
     document.getElementById('gradeCounter').textContent = `${gradeList.length} arvosanaa`;
+}
+
+// Lisää tämä funktio
+function editGrade(id) {
+    const grade = gradeList.find(g => g.id === id);
+    if (grade) {
+        document.getElementById('gradeSubject').value = grade.subject;
+        document.getElementById('gradeValue').value = grade.value;
+        document.getElementById('gradeDescription').value = grade.description || '';
+        
+        window.editingGradeId = id;
+        
+        showToast("✏️ Muokkaa arvosanaa ja paina 'Lisää arvosana' tallentaaksesi");
+    }
+}
+
+// Lisää myös tämä funktio (jos sitä ei ole)
+function deleteGrade(id) {
+    if (confirm('Haluatko varmasti poistaa tämän arvosanan?')) {
+        gradeList = gradeList.filter(grade => grade.id !== id);
+        localStorage.setItem('gradeList', JSON.stringify(gradeList));
+        renderGradeList();
+        updateGradeStats();
+        updateGradeCounter();
+        showToast("🗑️ Arvosana poistettu");
+    }
 }
 
 // ========== MUISTIINPANOJEN HALLINTA ==========
@@ -2789,21 +3019,50 @@ function closeNotesManager() {
     document.getElementById('notesModal').style.display = 'none';
 }
 
+// Lisää tämä funktio
+function editNote(id) {
+    const note = notesList.find(n => n.id === id);
+    if (note) {
+        document.getElementById('noteTitle').value = note.title;
+        document.getElementById('noteContent').value = note.content;
+        document.getElementById('noteCategory').value = note.category;
+        
+        window.editingNoteId = id;
+        
+        showToast("✏️ Muokkaa muistiinpanoa ja paina 'Lisää muistiinpano' tallentaaksesi");
+    }
+}
+
+// Päivitä addNote-funktio
 function addNote() {
     const title = document.getElementById('noteTitle').value.trim();
     const content = document.getElementById('noteContent').value.trim();
     const category = document.getElementById('noteCategory').value;
 
     if (title && content) {
-        const note = {
-            id: Date.now(),
-            title,
-            content,
-            category,
-            createdAt: new Date().toISOString()
-        };
+        // Tarkista onko muokkaus vai uusi lisäys
+        if (window.editingNoteId) {
+            // Päivitä olemassa oleva muistiinpano
+            notesList = notesList.map(note => 
+                note.id === window.editingNoteId 
+                    ? { ...note, title, content, category }
+                    : note
+            );
+            delete window.editingNoteId;
+            showToast("✅ Muistiinpano päivitetty!");
+        } else {
+            // Lisää uusi muistiinpano
+            const note = {
+                id: Date.now(),
+                title,
+                content,
+                category,
+                createdAt: new Date().toISOString()
+            };
+            notesList.push(note);
+            showToast("📓 Muistiinpano lisätty!");
+        }
 
-        notesList.push(note);
         localStorage.setItem('notesList', JSON.stringify(notesList));
         renderNotesList();
         updateNotesCounter();
@@ -2812,7 +3071,6 @@ function addNote() {
         document.getElementById('noteTitle').value = '';
         document.getElementById('noteContent').value = '';
         
-        showToast("📓 Muistiinpano lisätty!");
     } else {
         showToast("❌ Täytä otsikko ja sisältö");
     }
@@ -2867,8 +3125,10 @@ function editNote(id) {
         document.getElementById('noteContent').value = note.content;
         document.getElementById('noteCategory').value = note.category;
         
-        deleteNote(id);
-        showToast("✏️ Muokkaa muistiinpanoa ja tallenna uudelleen");
+        // POISTA: deleteNote(id);
+        window.editingNoteId = id;
+        
+        showToast("✏️ Muokkaa muistiinpanoa ja paina 'Lisää muistiinpano' tallentaaksesi");
     }
 }
 
