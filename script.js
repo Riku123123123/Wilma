@@ -3882,3 +3882,618 @@ function debounce(func, wait) {
         timeout = setTimeout(later, wait);
     };
 }
+
+// ========== USER AUTHENTICATION SYSTEM ==========
+let currentUser = null;
+let authToken = null;
+const API_BASE_URL = 'https://your-backend-api.com'; // Replace with your actual backend URL
+
+// Mock backend for demonstration (replace with real API calls)
+const mockBackend = {
+    users: JSON.parse(localStorage.getItem('mockUsers')) || [],
+    userData: JSON.parse(localStorage.getItem('mockUserData')) || {}
+};
+
+// Initialize authentication system
+function initializeAuth() {
+    checkExistingSession();
+    setupAuthEventListeners();
+    updateAuthUI();
+}
+
+// Check if user is already logged in
+function checkExistingSession() {
+    const savedUser = localStorage.getItem('currentUser');
+    const savedToken = localStorage.getItem('authToken');
+    
+    if (savedUser && savedToken) {
+        currentUser = JSON.parse(savedUser);
+        authToken = savedToken;
+        loadUserData();
+    } else {
+        // Show auth modal on first visit if not logged in
+        setTimeout(() => {
+            if (!currentUser) {
+                showAuthModal();
+            }
+        }, 2000);
+    }
+}
+
+// Setup authentication event listeners
+function setupAuthEventListeners() {
+    // Auth tabs
+    document.querySelectorAll('.auth-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabName = tab.dataset.tab;
+            switchAuthTab(tabName);
+        });
+    });
+
+    // Profile button
+    const profileBtn = document.getElementById('profileBtn');
+    if (profileBtn) {
+        profileBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (currentUser) {
+                showProfileModal();
+            } else {
+                showAuthModal();
+            }
+        });
+    }
+
+    // Enter key in auth forms
+    document.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const authModal = document.getElementById('authModal');
+            if (authModal.style.display === 'flex') {
+                if (document.getElementById('loginForm').classList.contains('active')) {
+                    login();
+                } else if (document.getElementById('registerForm').classList.contains('active')) {
+                    register();
+                }
+            }
+        }
+    });
+}
+
+// Switch between login/register tabs
+function switchAuthTab(tabName) {
+    document.querySelectorAll('.auth-tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
+    
+    document.querySelector(`.auth-tab[data-tab="${tabName}"]`).classList.add('active');
+    document.getElementById(`${tabName}Form`).classList.add('active');
+}
+
+// Show auth modal
+function showAuthModal() {
+    document.getElementById('authModal').style.display = 'flex';
+    document.getElementById('loginEmail').focus();
+}
+
+// Close auth modal
+function closeAuthModal() {
+    document.getElementById('authModal').style.display = 'none';
+}
+
+// Show login form
+function showLogin() {
+    switchAuthTab('login');
+}
+
+// Show forgot password form
+function showForgotPassword() {
+    document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
+    document.getElementById('forgotPasswordForm').classList.add('active');
+}
+
+// Show profile modal
+function showProfileModal() {
+    updateProfileInfo();
+    document.getElementById('profileModal').style.display = 'flex';
+}
+
+// Close profile modal
+function closeProfileModal() {
+    document.getElementById('profileModal').style.display = 'none';
+}
+
+// Register new user
+async function register() {
+    const name = document.getElementById('registerName').value.trim();
+    const email = document.getElementById('registerEmail').value.trim().toLowerCase();
+    const password = document.getElementById('registerPassword').value;
+    const confirmPassword = document.getElementById('registerConfirmPassword').value;
+
+    if (!name || !email || !password) {
+        showToast('❌ Täytä kaikki kentät');
+        return;
+    }
+
+    if (password.length < 6) {
+        showToast('❌ Salasanan tulee olla vähintään 6 merkkiä');
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        showToast('❌ Salasanat eivät täsmää');
+        return;
+    }
+
+    if (!isValidEmail(email)) {
+        showToast('❌ Syötä kelvollinen sähköpostiosoite');
+        return;
+    }
+
+    showSyncStatus('Rekisteröidään...', 'syncing');
+
+    try {
+        // Check if user already exists
+        const existingUser = mockBackend.users.find(user => user.email === email);
+        if (existingUser) {
+            throw new Error('Käyttäjä on jo olemassa');
+        }
+
+        // Create new user
+        const newUser = {
+            id: generateId(),
+            name,
+            email,
+            password: await hashPassword(password), // In real app, hash properly
+            createdAt: new Date().toISOString(),
+            lastLogin: new Date().toISOString()
+        };
+
+        mockBackend.users.push(newUser);
+        localStorage.setItem('mockUsers', JSON.stringify(mockBackend.users));
+
+        // Create user data storage
+        mockBackend.userData[newUser.id] = {
+            settings: {},
+            periods: {},
+            homework: [],
+            exams: [],
+            grades: [],
+            notes: []
+        };
+        localStorage.setItem('mockUserData', JSON.stringify(mockBackend.userData));
+
+        // Auto login after registration
+        await performLogin(email, password);
+
+    } catch (error) {
+        showSyncStatus('Rekisteröinti epäonnistui', 'error');
+        showToast(`❌ ${error.message}`);
+    }
+}
+
+// Login user
+async function login() {
+    const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+    const password = document.getElementById('loginPassword').value;
+
+    if (!email || !password) {
+        showToast('❌ Täytä sähköposti ja salasana');
+        return;
+    }
+
+    showSyncStatus('Kirjaudutaan sisään...', 'syncing');
+
+    try {
+        await performLogin(email, password);
+    } catch (error) {
+        showSyncStatus('Kirjautuminen epäonnistui', 'error');
+        showToast(`❌ ${error.message}`);
+    }
+}
+
+// Perform login
+async function performLogin(email, password) {
+    const user = mockBackend.users.find(u => u.email === email);
+    
+    if (!user) {
+        throw new Error('Käyttäjää ei löytynyt');
+    }
+
+    // In real app, verify hashed password
+    if (user.password !== await hashPassword(password)) {
+        throw new Error('Väärä salasana');
+    }
+
+    // Update last login
+    user.lastLogin = new Date().toISOString();
+    localStorage.setItem('mockUsers', JSON.stringify(mockBackend.users));
+
+    // Set current user
+    currentUser = {
+        id: user.id,
+        name: user.name,
+        email: user.email
+    };
+    
+    authToken = generateToken();
+    
+    // Save session
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    localStorage.setItem('authToken', authToken);
+
+    // Load user data
+    await loadUserData();
+
+    // Update UI
+    updateAuthUI();
+    closeAuthModal();
+    
+    showSyncStatus('Kirjauduttu sisään!', 'success');
+    showToast(`👋 Tervetuloa ${user.name}!`);
+}
+
+// Logout user
+function logout() {
+    if (confirm('Haluatko varmasti kirjautua ulos?')) {
+        // Sync before logout
+        syncData().finally(() => {
+            currentUser = null;
+            authToken = null;
+            
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('authToken');
+            
+            updateAuthUI();
+            closeProfileModal();
+            
+            showToast('👋 Olet kirjautunut ulos');
+            
+            // Show auth modal after logout
+            setTimeout(showAuthModal, 1000);
+        });
+    }
+}
+
+// Reset password
+function resetPassword() {
+    const email = document.getElementById('forgotEmail').value.trim();
+    
+    if (!email) {
+        showToast('❌ Syötä sähköpostiosoite');
+        return;
+    }
+
+    showSyncStatus('Lähetetään reset-linkkiä...', 'syncing');
+    
+    // Simulate API call
+    setTimeout(() => {
+        showSyncStatus('Reset-linkki lähetetty!', 'success');
+        showToast('📧 Tarkista sähköpostisi reset-linkkiä varten');
+        showLogin();
+    }, 2000);
+}
+
+// Load user data from cloud
+async function loadUserData() {
+    if (!currentUser) return;
+
+    showSyncStatus('Ladataan käyttäjätietoja...', 'syncing');
+
+    try {
+        const userData = mockBackend.userData[currentUser.id];
+        
+        if (userData) {
+            // Load settings
+            if (userData.settings) {
+                Object.keys(userData.settings).forEach(key => {
+                    localStorage.setItem(key, userData.settings[key]);
+                });
+            }
+
+            // Load periods
+            if (userData.periods) {
+                Object.keys(userData.periods).forEach(periodId => {
+                    localStorage.setItem(`periodSettings_${periodId}`, JSON.stringify(userData.periods[periodId]));
+                });
+            }
+
+            // Load other data
+            if (userData.homework) {
+                homeworkList = userData.homework;
+                localStorage.setItem('homeworkList', JSON.stringify(homeworkList));
+            }
+
+            if (userData.exams) {
+                examList = userData.exams;
+                localStorage.setItem('examList', JSON.stringify(examList));
+            }
+
+            if (userData.grades) {
+                gradeList = userData.grades;
+                localStorage.setItem('gradeList', JSON.stringify(gradeList));
+            }
+
+            if (userData.notes) {
+                notesList = userData.notes;
+                localStorage.setItem('notesList', JSON.stringify(notesList));
+            }
+
+            // Reload the app with new data
+            initializeApp();
+            
+            showSyncStatus('Tiedot ladattu!', 'success');
+        }
+    } catch (error) {
+        console.error('Error loading user data:', error);
+        showSyncStatus('Virhe tiedoissa', 'error');
+    }
+}
+
+// Sync data to cloud
+async function syncData() {
+    if (!currentUser) {
+        showToast('❌ Kirjaudu sisään synkronoidaksesi');
+        return;
+    }
+
+    showSyncStatus('Synkronoidaan...', 'syncing');
+
+    try {
+        // Collect all local data
+        const userData = {
+            settings: getAllSettings(),
+            periods: getAllPeriods(),
+            homework: homeworkList,
+            exams: examList,
+            grades: gradeList,
+            notes: notesList,
+            lastSync: new Date().toISOString()
+        };
+
+        // Save to cloud (mock backend)
+        mockBackend.userData[currentUser.id] = userData;
+        localStorage.setItem('mockUserData', JSON.stringify(mockBackend.userData));
+
+        // Update last sync time
+        if (mockBackend.users) {
+            const userIndex = mockBackend.users.findIndex(u => u.id === currentUser.id);
+            if (userIndex !== -1) {
+                mockBackend.users[userIndex].lastSync = new Date().toISOString();
+                localStorage.setItem('mockUsers', JSON.stringify(mockBackend.users));
+            }
+        }
+
+        showSyncStatus('Synkronoitu!', 'success');
+        showToast('✅ Tiedot synkronoitu pilveen');
+        
+        // Update profile info
+        updateProfileInfo();
+
+    } catch (error) {
+        console.error('Sync error:', error);
+        showSyncStatus('Synkronointi epäonnistui', 'error');
+        showToast('❌ Synkronointi epäonnistui');
+    }
+}
+
+// Get all settings from localStorage
+function getAllSettings() {
+    const settings = {};
+    const settingKeys = [
+        'theme', 'font', 'fontSize', 'customSubjects', 'meals', 
+        'singleEvents', 'slotColors', 'examWeek'
+    ];
+    
+    settingKeys.forEach(key => {
+        const value = localStorage.getItem(key);
+        if (value) {
+            settings[key] = value;
+        }
+    });
+    
+    return settings;
+}
+
+// Get all periods from localStorage
+function getAllPeriods() {
+    const periods = {};
+    for (let i = 1; i <= 5; i++) {
+        const periodData = localStorage.getItem(`periodSettings_${i}`);
+        if (periodData) {
+            periods[i] = JSON.parse(periodData);
+        }
+    }
+    return periods;
+}
+
+// Update authentication UI
+function updateAuthUI() {
+    const profileBtn = document.getElementById('profileBtn');
+    const userBadge = document.querySelector('.user-badge');
+    
+    if (currentUser) {
+        // User is logged in
+        if (profileBtn) {
+            profileBtn.innerHTML = '<i class="fas fa-user" aria-hidden="true"></i><span>Profiili</span>';
+        }
+        
+        if (userBadge) {
+            userBadge.textContent = `👤 ${currentUser.name}`;
+            userBadge.classList.add('visible');
+            userBadge.onclick = showProfileModal;
+        }
+        
+        // Setup auto-sync
+        setupAutoSync();
+        
+    } else {
+        // User is not logged in
+        if (profileBtn) {
+            profileBtn.innerHTML = '<i class="fas fa-sign-in-alt" aria-hidden="true"></i><span>Kirjaudu</span>';
+        }
+        
+        if (userBadge) {
+            userBadge.classList.remove('visible');
+        }
+    }
+}
+
+// Update profile information
+function updateProfileInfo() {
+    if (!currentUser) return;
+
+    document.getElementById('profileName').textContent = currentUser.name;
+    document.getElementById('profileEmail').textContent = currentUser.email;
+    
+    // Calculate stats
+    const periodCount = Object.keys(getAllPeriods()).length;
+    const lastSync = getLastSyncTime();
+    
+    document.getElementById('profilePeriods').textContent = periodCount;
+    document.getElementById('profileLastSync').textContent = lastSync;
+    
+    // Update avatar with first letter
+    const firstLetter = currentUser.name.charAt(0).toUpperCase();
+    document.getElementById('profileAvatar').textContent = firstLetter;
+}
+
+// Get last sync time
+function getLastSyncTime() {
+    if (!currentUser || !mockBackend.users) return '-';
+    
+    const user = mockBackend.users.find(u => u.id === currentUser.id);
+    if (!user || !user.lastSync) return '-';
+    
+    const lastSync = new Date(user.lastSync);
+    const now = new Date();
+    const diffMinutes = Math.floor((now - lastSync) / (1000 * 60));
+    
+    if (diffMinutes < 1) return 'Juuri nyt';
+    if (diffMinutes < 60) return `${diffMinutes} min sitten`;
+    if (diffMinutes < 1440) return `${Math.floor(diffMinutes / 60)} h sitten`;
+    
+    return lastSync.toLocaleDateString('fi-FI');
+}
+
+// Setup auto-sync
+function setupAutoSync() {
+    const autoSync = localStorage.getItem('autoSync') !== 'false';
+    
+    if (autoSync && currentUser) {
+        // Sync every 5 minutes
+        setInterval(() => {
+            if (navigator.onLine) {
+                syncData();
+            }
+        }, 5 * 60 * 1000);
+        
+        // Sync when coming online
+        window.addEventListener('online', () => {
+            syncData();
+        });
+    }
+}
+
+// Export user data
+function exportUserData() {
+    const userData = {
+        user: currentUser,
+        settings: getAllSettings(),
+        periods: getAllPeriods(),
+        homework: homeworkList,
+        exams: examList,
+        grades: gradeList,
+        notes: notesList,
+        exportedAt: new Date().toISOString()
+    };
+    
+    const dataStr = JSON.stringify(userData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(dataBlob);
+    link.download = `rauman-lukio-data-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    
+    showToast('📤 Tiedot vietu onnistuneesti');
+}
+
+// Show sync status
+function showSyncStatus(message, type) {
+    let statusEl = document.querySelector('.sync-status');
+    if (!statusEl) {
+        statusEl = document.createElement('div');
+        statusEl.className = 'sync-status';
+        document.body.appendChild(statusEl);
+    }
+    
+    statusEl.textContent = message;
+    statusEl.className = `sync-status ${type}`;
+    
+    setTimeout(() => {
+        statusEl.style.display = 'none';
+    }, 3000);
+}
+
+// Utility functions
+function generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
+
+function generateToken() {
+    return Math.random().toString(36).substr(2) + Math.random().toString(36).substr(2);
+}
+
+async function hashPassword(password) {
+    // In real app, use proper hashing like bcrypt
+    // This is just a simple demo version
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hash = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+// Modify existing functions to auto-sync when user is logged in
+function wrapWithSync(originalFunction) {
+    return function(...args) {
+        const result = originalFunction.apply(this, args);
+        
+        // Auto-sync after data changes if user is logged in
+        if (currentUser && localStorage.getItem('autoSync') !== 'false') {
+            setTimeout(syncData, 1000);
+        }
+        
+        return result;
+    };
+}
+
+// Wrap data-modifying functions with auto-sync
+const syncWrappedFunctions = [
+    'savePeriodSettings',
+    'saveMeals',
+    'saveSchedule',
+    'addHomework',
+    'toggleHomework',
+    'deleteHomework',
+    'addExam',
+    'deleteExam',
+    'addGrade',
+    'deleteGrade',
+    'addNote',
+    'deleteNote',
+    'saveExamWeek'
+];
+
+syncWrappedFunctions.forEach(funcName => {
+    if (typeof window[funcName] === 'function') {
+        window[funcName] = wrapWithSync(window[funcName]);
+    }
+});
+
+// Initialize auth system when app loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeAuth();
+});
