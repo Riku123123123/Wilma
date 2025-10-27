@@ -709,12 +709,14 @@
         </div>
     </div>
 
-    <!-- Login/Register Modal -->
-<div id="authModal" class="modal" role="dialog" aria-labelledby="auth-heading" aria-hidden="true">
-    <div class="modal-content auth-modal">
+   <!-- Login/Register Modal -->
+<div id="authModal" class="modal auth-modal" role="dialog" aria-labelledby="auth-heading" aria-hidden="true">
+    <div class="modal-content">
         <div class="modal-header">
-            <h2 id="auth-heading">👤 Kirjaudu sisään</h2>
-            <button class="close-btn" onclick="closeAuthModal()" aria-label="Sulje">&times;</button>
+            <h2 id="auth-heading">👤 Tervetuloa takaisin</h2>
+            <button class="close-btn" onclick="closeAuthModal()" aria-label="Sulje kirjautumisikkuna">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
         
         <div class="modal-body">
@@ -726,14 +728,17 @@
             <!-- Login Form -->
             <div id="loginForm" class="auth-form active">
                 <div class="form-group">
-                    <label for="loginEmail">Sähköposti:</label>
-                    <input type="email" id="loginEmail" placeholder="oma.sahkoposti@esimerkki.fi">
+                    <label for="loginEmail">Sähköposti</label>
+                    <input type="email" id="loginEmail" placeholder="oma.sahkoposti@esimerkki.fi" autocomplete="email">
                 </div>
                 <div class="form-group">
-                    <label for="loginPassword">Salasana:</label>
-                    <input type="password" id="loginPassword" placeholder="Salasanasi">
+                    <label for="loginPassword">Salasana</label>
+                    <input type="password" id="loginPassword" placeholder="Salasanasi" autocomplete="current-password">
                 </div>
-                <button onclick="login()" class="auth-btn primary">Kirjaudu sisään</button>
+                <button onclick="login()" class="auth-btn primary">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Kirjaudu sisään
+                </button>
                 <div class="auth-links">
                     <a href="#" onclick="showForgotPassword()">Unohditko salasanasi?</a>
                 </div>
@@ -742,31 +747,37 @@
             <!-- Register Form -->
             <div id="registerForm" class="auth-form">
                 <div class="form-group">
-                    <label for="registerName">Nimi:</label>
-                    <input type="text" id="registerName" placeholder="Etunimi Sukunimi">
+                    <label for="registerName">Koko nimesi</label>
+                    <input type="text" id="registerName" placeholder="Etunimi Sukunimi" autocomplete="name">
                 </div>
                 <div class="form-group">
-                    <label for="registerEmail">Sähköposti:</label>
-                    <input type="email" id="registerEmail" placeholder="oma.sahkoposti@esimerkki.fi">
+                    <label for="registerEmail">Sähköposti</label>
+                    <input type="email" id="registerEmail" placeholder="oma.sahkoposti@esimerkki.fi" autocomplete="email">
                 </div>
                 <div class="form-group">
-                    <label for="registerPassword">Salasana:</label>
-                    <input type="password" id="registerPassword" placeholder="Vähintään 6 merkkiä">
+                    <label for="registerPassword">Salasana</label>
+                    <input type="password" id="registerPassword" placeholder="Vähintään 6 merkkiä" autocomplete="new-password">
                 </div>
                 <div class="form-group">
-                    <label for="registerConfirmPassword">Vahvista salasana:</label>
-                    <input type="password" id="registerConfirmPassword" placeholder="Salasana uudelleen">
+                    <label for="registerConfirmPassword">Vahvista salasana</label>
+                    <input type="password" id="registerConfirmPassword" placeholder="Salasana uudelleen" autocomplete="new-password">
                 </div>
-                <button onclick="register()" class="auth-btn secondary">Luo tili</button>
+                <button onclick="register()" class="auth-btn secondary">
+                    <i class="fas fa-user-plus"></i>
+                    Luo tili
+                </button>
             </div>
             
             <!-- Forgot Password Form -->
             <div id="forgotPasswordForm" class="auth-form">
                 <div class="form-group">
-                    <label for="forgotEmail">Sähköposti:</label>
-                    <input type="email" id="forgotEmail" placeholder="Sähköpostisi">
+                    <label for="forgotEmail">Sähköposti</label>
+                    <input type="email" id="forgotEmail" placeholder="Sähköpostiosoitteesi" autocomplete="email">
                 </div>
-                <button onclick="resetPassword()" class="auth-btn primary">Lähetä reset-linkki</button>
+                <button onclick="resetPassword()" class="auth-btn primary">
+                    <i class="fas fa-envelope"></i>
+                    Lähetä reset-linkki
+                </button>
                 <div class="auth-links">
                     <a href="#" onclick="showLogin()">Takaisin kirjautumiseen</a>
                 </div>
@@ -776,11 +787,13 @@
 </div>
 
 <!-- User Profile Modal -->
-<div id="profileModal" class="modal" role="dialog" aria-labelledby="profile-heading" aria-hidden="true">
-    <div class="modal-content profile-modal">
+<div id="profileModal" class="modal profile-modal" role="dialog" aria-labelledby="profile-heading" aria-hidden="true">
+    <div class="modal-content">
         <div class="modal-header">
-            <h2 id="profile-heading">👤 Profiili</h2>
-            <button class="close-btn" onclick="closeProfileModal()" aria-label="Sulje">&times;</button>
+            <h2 id="profile-heading">👤 Profiilisi</h2>
+            <button class="close-btn" onclick="closeProfileModal()" aria-label="Sulje profiili-ikkuna">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
         
         <div class="modal-body">
@@ -791,7 +804,7 @@
                 <div class="profile-details">
                     <h3 id="profileName">Käyttäjä</h3>
                     <p id="profileEmail">sahkoposti@esimerkki.fi</p>
-                    <p class="profile-status" id="profileStatus">Synkronoi laitteiden välillä</p>
+                    <span class="profile-status" id="profileStatus">Synkronoi laitteiden välillä</span>
                 </div>
             </div>
             
@@ -808,13 +821,16 @@
             
             <div class="profile-actions">
                 <button onclick="syncData()" class="profile-btn primary">
-                    <i class="fas fa-sync"></i> Synkronoi nyt
+                    <i class="fas fa-sync"></i>
+                    Synkronoi nyt
                 </button>
                 <button onclick="exportUserData()" class="profile-btn secondary">
-                    <i class="fas fa-download"></i> Vie tiedot
+                    <i class="fas fa-download"></i>
+                    Vie tiedot
                 </button>
                 <button onclick="logout()" class="profile-btn danger">
-                    <i class="fas fa-sign-out-alt"></i> Kirjaudu ulos
+                    <i class="fas fa-sign-out-alt"></i>
+                    Kirjaudu ulos
                 </button>
             </div>
             

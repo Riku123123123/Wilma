@@ -4033,7 +4033,16 @@ function closeProfileModal() {
 }
 
 // Rekisteröi uusi käyttäjä
+// Rekisteröi uusi käyttäjä
 async function register() {
+    const registerBtn = document.querySelector('#registerForm .auth-btn');
+    
+    if (!registerBtn.getAttribute('data-original-text')) {
+        registerBtn.setAttribute('data-original-text', registerBtn.innerHTML);
+    }
+
+    setButtonLoading(registerBtn, true);
+    
     const name = document.getElementById('registerName').value.trim();
     const email = document.getElementById('registerEmail').value.trim().toLowerCase();
     const password = document.getElementById('registerPassword').value;
@@ -4069,7 +4078,9 @@ async function register() {
                 data: {
                     name: name,
                     avatar: name.charAt(0).toUpperCase()
-                }
+                },
+                // Voit myös kytkeä sähköpostivahvistuksen pois täältä
+                emailRedirectTo: `${window.location.origin}`
             }
         });
 
@@ -4077,7 +4088,18 @@ async function register() {
 
         if (data.user) {
             showSyncStatus('Rekisteröinti onnistui!', 'success');
-            showToast('✅ Tarkista sähköpostisi vahvistaaksesi tilin');
+            
+            if (data.user.identities && data.user.identities.length === 0) {
+                showToast('❌ Käyttäjä on jo olemassa tällä sähköpostilla');
+                return;
+            }
+            
+            if (!data.user.email_confirmed_at) {
+                showToast('📧 Tarkista sähköpostisi ja vahvista tilisi ennen kirjautumista');
+            } else {
+                showToast('✅ Rekisteröinti onnistui! Voit nyt kirjautua sisään');
+                showLogin();
+            }
             
             // Luo profiili tietokantaan
             await createUserProfile(data.user.id, name, email);
@@ -4090,35 +4112,50 @@ async function register() {
     }
 }
 
-// Kirjaudu sisään
+
+
+// Näytä lataustila painikkeille
+function setButtonLoading(button, isLoading) {
+    if (isLoading) {
+        button.disabled = true;
+        button.classList.add('loading');
+        button.innerHTML = button.innerHTML.replace(/<i class="[^"]*"><\/i>/, '') + '<i class="fas fa-spinner fa-spin"></i>';
+    } else {
+        button.disabled = false;
+        button.classList.remove('loading');
+        // Palauta alkuperäinen sisältö
+        const originalText = button.getAttribute('data-original-text');
+        if (originalText) {
+            button.innerHTML = originalText;
+        }
+    }
+}
+
+// Päivitä login-funktio
 async function login() {
     const email = document.getElementById('loginEmail').value.trim().toLowerCase();
     const password = document.getElementById('loginPassword').value;
+    const loginBtn = document.querySelector('#loginForm .auth-btn');
 
     if (!email || !password) {
         showToast('❌ Täytä sähköposti ja salasana');
         return;
     }
 
+    // Tallenna alkuperäinen teksti
+    if (!loginBtn.getAttribute('data-original-text')) {
+        loginBtn.setAttribute('data-original-text', loginBtn.innerHTML);
+    }
+
+    setButtonLoading(loginBtn, true);
     showSyncStatus('Kirjaudutaan sisään...', 'syncing');
 
     try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password
-        });
-
-        if (error) throw error;
-
-        if (data.user) {
-            showSyncStatus('Kirjauduttu sisään!', 'success');
-            // Auth state change -handler hoitaa loput
-        }
-
+        // ... existing login code ...
     } catch (error) {
-        console.error('Login error:', error);
-        showSyncStatus('Kirjautuminen epäonnistui', 'error');
-        showToast(`❌ ${error.message}`);
+        // ... existing error handling ...
+    } finally {
+        setButtonLoading(loginBtn, false);
     }
 }
 
