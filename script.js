@@ -4042,7 +4042,7 @@ async function register() {
     }
 
     setButtonLoading(registerBtn, true);
-    
+
     const name = document.getElementById('registerName').value.trim();
     const email = document.getElementById('registerEmail').value.trim().toLowerCase();
     const password = document.getElementById('registerPassword').value;
@@ -4131,7 +4131,7 @@ function setButtonLoading(button, isLoading) {
     }
 }
 
-// Päivitä login-funktio
+// Kirjaudu sisään
 async function login() {
     const email = document.getElementById('loginEmail').value.trim().toLowerCase();
     const password = document.getElementById('loginPassword').value;
@@ -4151,9 +4151,60 @@ async function login() {
     showSyncStatus('Kirjaudutaan sisään...', 'syncing');
 
     try {
-        // ... existing login code ...
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password
+        });
+
+        if (error) {
+            console.log('Login error details:', error);
+            
+            // Käsitellään eri virhekoodit
+            if (error.code === 'email_not_confirmed') {
+                // Yritetään kirjautua sisään vaikka sähköposti ei ole vahvistettu
+                showToast('⚠️ Vahvista sähköpostisi pian. Yritetään kirjautua...');
+                
+                // Yritetään uudelleen kirjautumista
+                const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
+                    email,
+                    password
+                });
+                
+                if (retryError) {
+                    // Jos edelleen epäonnistuu, näytetään virhe
+                    throw new Error('Sähköpostia ei ole vahvistettu. Tarkista sähköpostisi.');
+                }
+                
+                if (retryData.user) {
+                    showSyncStatus('Kirjauduttu sisään!', 'success');
+                    showToast('✅ Kirjautuminen onnistui!');
+                    return;
+                }
+            }
+            
+            if (error.code === 'invalid_credentials') {
+                throw new Error('Väärä sähköposti tai salasana');
+            }
+            
+            throw error;
+        }
+
+        if (data.user) {
+            showSyncStatus('Kirjauduttu sisään!', 'success');
+            showToast(`👋 Tervetuloa ${data.user.user_metadata?.name || 'takaisin'}!`);
+        }
+
     } catch (error) {
-        // ... existing error handling ...
+        console.error('Login error:', error);
+        showSyncStatus('Kirjautuminen epäonnistui', 'error');
+        
+        if (error.message.includes('Email not confirmed')) {
+            showToast('❌ Sähköpostia ei ole vahvistettu. Tarkista sähköpostisi vahvistuslinkki.');
+        } else if (error.message.includes('Invalid login credentials')) {
+            showToast('❌ Väärä sähköposti tai salasana');
+        } else {
+            showToast(`❌ ${error.message}`);
+        }
     } finally {
         setButtonLoading(loginBtn, false);
     }
