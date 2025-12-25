@@ -3883,63 +3883,46 @@ function debounce(func, wait) {
     };
 }
 
-// ========== SUPABASE AUTHENTICATION SYSTEM ==========
+// ========== USER AUTHENTICATION SYSTEM ==========
 let currentUser = null;
-const SUPABASE_URL = 'https://dnefysoruxfuvhigkflk.supabase.co'; // Korvaa oikealla URL:llä
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRuZWZ5c29ydXhmdXZoaWdrZmxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE1ODI5MjQsImV4cCI6MjA3NzE1ODkyNH0.rsMnikNHBu1iCaJ9kDC_kL0si8Ci13q-OSpO3HH1mic'; // Korvaa oikealla avaimella
+let authToken = null;
+const API_BASE_URL = 'https://your-backend-api.com'; // Replace with your actual backend URL
 
-// Alusta Supabase-client
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Mock backend for demonstration (replace with real API calls)
+const mockBackend = {
+    users: JSON.parse(localStorage.getItem('mockUsers')) || [],
+    userData: JSON.parse(localStorage.getItem('mockUserData')) || {}
+};
 
-// Tarkista yhteys Supabaseen
-async function checkSupabaseConnection() {
-    try {
-        const { data, error } = await supabase.from('profiles').select('count').limit(1);
-        if (error) throw error;
-        console.log('Supabase yhteys toimii');
-        return true;
-    } catch (error) {
-        console.error('Supabase yhteys epäonnistui:', error);
-        showToast('❌ Tietokantayhteys epäonnistui');
-        return false;
-    }
-}
-
-// Alusta authentication-järjestelmä
-async function initializeAuth() {
-    await checkSupabaseConnection();
-    await checkExistingSession();
+// Initialize authentication system
+function initializeAuth() {
+    checkExistingSession();
     setupAuthEventListeners();
     updateAuthUI();
 }
 
-// Tarkista onko käyttäjä jo kirjautunut
-async function checkExistingSession() {
-    try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) throw error;
-        
-        if (session?.user) {
-            currentUser = session.user;
-            await loadUserData();
-            showToast(`👋 Tervetuloa takaisin!`);
-        } else {
-            // Näytä kirjautumisikkuna ensimmäisellä käyttökerralla
-            setTimeout(() => {
-                if (!currentUser) {
-                    showAuthModal();
-                }
-            }, 2000);
-        }
-    } catch (error) {
-        console.error('Session check error:', error);
+// Check if user is already logged in
+function checkExistingSession() {
+    const savedUser = localStorage.getItem('currentUser');
+    const savedToken = localStorage.getItem('authToken');
+    
+    if (savedUser && savedToken) {
+        currentUser = JSON.parse(savedUser);
+        authToken = savedToken;
+        loadUserData();
+    } else {
+        // Show auth modal on first visit if not logged in
+        setTimeout(() => {
+            if (!currentUser) {
+                showAuthModal();
+            }
+        }, 2000);
     }
 }
 
-// Aseta auth-tapahtumakuuntelijat
+// Setup authentication event listeners
 function setupAuthEventListeners() {
-    // Auth-välilehdet
+    // Auth tabs
     document.querySelectorAll('.auth-tab').forEach(tab => {
         tab.addEventListener('click', () => {
             const tabName = tab.dataset.tab;
@@ -3947,7 +3930,7 @@ function setupAuthEventListeners() {
         });
     });
 
-    // Profiilinappi
+    // Profile button
     const profileBtn = document.getElementById('profileBtn');
     if (profileBtn) {
         profileBtn.addEventListener('click', (e) => {
@@ -3960,7 +3943,7 @@ function setupAuthEventListeners() {
         });
     }
 
-    // Enter-näppäin auth-lomakkeissa
+    // Enter key in auth forms
     document.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             const authModal = document.getElementById('authModal');
@@ -3973,24 +3956,9 @@ function setupAuthEventListeners() {
             }
         }
     });
-
-    // Kuuntele auth-tilan muutoksia
-    supabase.auth.onAuthStateChange(async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
-            currentUser = session.user;
-            await loadUserData();
-            updateAuthUI();
-            closeAuthModal();
-            showToast(`👋 Tervetuloa ${session.user.user_metadata?.name || 'Käyttäjä'}!`);
-        } else if (event === 'SIGNED_OUT') {
-            currentUser = null;
-            updateAuthUI();
-            showToast('👋 Olet kirjautunut ulos');
-        }
-    });
 }
 
-// Vaihda kirjautumis-/rekisteröintivälilehtiä
+// Switch between login/register tabs
 function switchAuthTab(tabName) {
     document.querySelectorAll('.auth-tab').forEach(tab => tab.classList.remove('active'));
     document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
@@ -3999,50 +3967,41 @@ function switchAuthTab(tabName) {
     document.getElementById(`${tabName}Form`).classList.add('active');
 }
 
-// Näytä kirjautumisikkuna
+// Show auth modal
 function showAuthModal() {
     document.getElementById('authModal').style.display = 'flex';
     document.getElementById('loginEmail').focus();
 }
 
-// Sulje kirjautumisikkuna
+// Close auth modal
 function closeAuthModal() {
     document.getElementById('authModal').style.display = 'none';
 }
 
-// Näytä kirjautumislomake
+// Show login form
 function showLogin() {
     switchAuthTab('login');
 }
 
-// Näytä salasanan palautuslomake
+// Show forgot password form
 function showForgotPassword() {
     document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
     document.getElementById('forgotPasswordForm').classList.add('active');
 }
 
-// Näytä profiili-ikkuna
+// Show profile modal
 function showProfileModal() {
     updateProfileInfo();
     document.getElementById('profileModal').style.display = 'flex';
 }
 
-// Sulje profiili-ikkuna
+// Close profile modal
 function closeProfileModal() {
     document.getElementById('profileModal').style.display = 'none';
 }
 
-// Rekisteröi uusi käyttäjä
-// Rekisteröi uusi käyttäjä
+// Register new user
 async function register() {
-    const registerBtn = document.querySelector('#registerForm .auth-btn');
-    
-    if (!registerBtn.getAttribute('data-original-text')) {
-        registerBtn.setAttribute('data-original-text', registerBtn.innerHTML);
-    }
-
-    setButtonLoading(registerBtn, true);
-
     const name = document.getElementById('registerName').value.trim();
     const email = document.getElementById('registerEmail').value.trim().toLowerCase();
     const password = document.getElementById('registerPassword').value;
@@ -4071,271 +4030,204 @@ async function register() {
     showSyncStatus('Rekisteröidään...', 'syncing');
 
     try {
-        const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-                data: {
-                    name: name,
-                    avatar: name.charAt(0).toUpperCase()
-                },
-                // Voit myös kytkeä sähköpostivahvistuksen pois täältä
-                emailRedirectTo: `${window.location.origin}`
-            }
-        });
-
-        if (error) throw error;
-
-        if (data.user) {
-            showSyncStatus('Rekisteröinti onnistui!', 'success');
-            
-            if (data.user.identities && data.user.identities.length === 0) {
-                showToast('❌ Käyttäjä on jo olemassa tällä sähköpostilla');
-                return;
-            }
-            
-            if (!data.user.email_confirmed_at) {
-                showToast('📧 Tarkista sähköpostisi ja vahvista tilisi ennen kirjautumista');
-            } else {
-                showToast('✅ Rekisteröinti onnistui! Voit nyt kirjautua sisään');
-                showLogin();
-            }
-            
-            // Luo profiili tietokantaan
-            await createUserProfile(data.user.id, name, email);
+        // Check if user already exists
+        const existingUser = mockBackend.users.find(user => user.email === email);
+        if (existingUser) {
+            throw new Error('Käyttäjä on jo olemassa');
         }
 
+        // Create new user
+        const newUser = {
+            id: generateId(),
+            name,
+            email,
+            password: await hashPassword(password), // In real app, hash properly
+            createdAt: new Date().toISOString(),
+            lastLogin: new Date().toISOString()
+        };
+
+        mockBackend.users.push(newUser);
+        localStorage.setItem('mockUsers', JSON.stringify(mockBackend.users));
+
+        // Create user data storage
+        mockBackend.userData[newUser.id] = {
+            settings: {},
+            periods: {},
+            homework: [],
+            exams: [],
+            grades: [],
+            notes: []
+        };
+        localStorage.setItem('mockUserData', JSON.stringify(mockBackend.userData));
+
+        // Auto login after registration
+        await performLogin(email, password);
+
     } catch (error) {
-        console.error('Registration error:', error);
         showSyncStatus('Rekisteröinti epäonnistui', 'error');
         showToast(`❌ ${error.message}`);
     }
 }
 
-
-
-// Näytä lataustila painikkeille
-function setButtonLoading(button, isLoading) {
-    if (isLoading) {
-        button.disabled = true;
-        button.classList.add('loading');
-        button.innerHTML = button.innerHTML.replace(/<i class="[^"]*"><\/i>/, '') + '<i class="fas fa-spinner fa-spin"></i>';
-    } else {
-        button.disabled = false;
-        button.classList.remove('loading');
-        // Palauta alkuperäinen sisältö
-        const originalText = button.getAttribute('data-original-text');
-        if (originalText) {
-            button.innerHTML = originalText;
-        }
-    }
-}
-
-// Kirjaudu sisään
+// Login user
 async function login() {
     const email = document.getElementById('loginEmail').value.trim().toLowerCase();
     const password = document.getElementById('loginPassword').value;
-    const loginBtn = document.querySelector('#loginForm .auth-btn');
 
     if (!email || !password) {
         showToast('❌ Täytä sähköposti ja salasana');
         return;
     }
 
-    // Tallenna alkuperäinen teksti
-    if (!loginBtn.getAttribute('data-original-text')) {
-        loginBtn.setAttribute('data-original-text', loginBtn.innerHTML);
-    }
-
-    setButtonLoading(loginBtn, true);
     showSyncStatus('Kirjaudutaan sisään...', 'syncing');
 
     try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password
-        });
-
-        if (error) {
-            console.log('Login error details:', error);
-            
-            // Käsitellään eri virhekoodit
-            if (error.code === 'email_not_confirmed') {
-                // Yritetään kirjautua sisään vaikka sähköposti ei ole vahvistettu
-                showToast('⚠️ Vahvista sähköpostisi pian. Yritetään kirjautua...');
-                
-                // Yritetään uudelleen kirjautumista
-                const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
-                    email,
-                    password
-                });
-                
-                if (retryError) {
-                    // Jos edelleen epäonnistuu, näytetään virhe
-                    throw new Error('Sähköpostia ei ole vahvistettu. Tarkista sähköpostisi.');
-                }
-                
-                if (retryData.user) {
-                    showSyncStatus('Kirjauduttu sisään!', 'success');
-                    showToast('✅ Kirjautuminen onnistui!');
-                    return;
-                }
-            }
-            
-            if (error.code === 'invalid_credentials') {
-                throw new Error('Väärä sähköposti tai salasana');
-            }
-            
-            throw error;
-        }
-
-        if (data.user) {
-            showSyncStatus('Kirjauduttu sisään!', 'success');
-            showToast(`👋 Tervetuloa ${data.user.user_metadata?.name || 'takaisin'}!`);
-        }
-
+        await performLogin(email, password);
     } catch (error) {
-        console.error('Login error:', error);
         showSyncStatus('Kirjautuminen epäonnistui', 'error');
-        
-        if (error.message.includes('Email not confirmed')) {
-            showToast('❌ Sähköpostia ei ole vahvistettu. Tarkista sähköpostisi vahvistuslinkki.');
-        } else if (error.message.includes('Invalid login credentials')) {
-            showToast('❌ Väärä sähköposti tai salasana');
-        } else {
-            showToast(`❌ ${error.message}`);
-        }
-    } finally {
-        setButtonLoading(loginBtn, false);
+        showToast(`❌ ${error.message}`);
     }
 }
 
-// Kirjaudu ulos
-async function logout() {
+// Perform login
+async function performLogin(email, password) {
+    const user = mockBackend.users.find(u => u.email === email);
+    
+    if (!user) {
+        throw new Error('Käyttäjää ei löytynyt');
+    }
+
+    // In real app, verify hashed password
+    if (user.password !== await hashPassword(password)) {
+        throw new Error('Väärä salasana');
+    }
+
+    // Update last login
+    user.lastLogin = new Date().toISOString();
+    localStorage.setItem('mockUsers', JSON.stringify(mockBackend.users));
+
+    // Set current user
+    currentUser = {
+        id: user.id,
+        name: user.name,
+        email: user.email
+    };
+    
+    authToken = generateToken();
+    
+    // Save session
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    localStorage.setItem('authToken', authToken);
+
+    // Load user data
+    await loadUserData();
+
+    // Update UI
+    updateAuthUI();
+    closeAuthModal();
+    
+    showSyncStatus('Kirjauduttu sisään!', 'success');
+    showToast(`👋 Tervetuloa ${user.name}!`);
+}
+
+// Logout user
+function logout() {
     if (confirm('Haluatko varmasti kirjautua ulos?')) {
-        try {
-            // Synkronoi ennen uloskirjautumista
-            await syncData();
+        // Sync before logout
+        syncData().finally(() => {
+            currentUser = null;
+            authToken = null;
             
-            const { error } = await supabase.auth.signOut();
-            if (error) throw error;
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('authToken');
             
+            updateAuthUI();
             closeProfileModal();
             
-        } catch (error) {
-            console.error('Logout error:', error);
-            showToast('❌ Uloskirjautuminen epäonnistui');
-        }
+            showToast('👋 Olet kirjautunut ulos');
+            
+            // Show auth modal after logout
+            setTimeout(showAuthModal, 1000);
+        });
     }
 }
 
-// Luo käyttäjäprofiili
-async function createUserProfile(userId, name, email) {
-    try {
-        const { error } = await supabase
-            .from('profiles')
-            .insert([
-                {
-                    id: userId,
-                    name: name,
-                    email: email,
-                    avatar: name.charAt(0).toUpperCase(),
-                    settings: {},
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
-                }
-            ]);
-
-        if (error) throw error;
-        
-        console.log('Profiili luotu onnistuneesti');
-    } catch (error) {
-        console.error('Profiilin luonti epäonnistui:', error);
+// Reset password
+function resetPassword() {
+    const email = document.getElementById('forgotEmail').value.trim();
+    
+    if (!email) {
+        showToast('❌ Syötä sähköpostiosoite');
+        return;
     }
+
+    showSyncStatus('Lähetetään reset-linkkiä...', 'syncing');
+    
+    // Simulate API call
+    setTimeout(() => {
+        showSyncStatus('Reset-linkki lähetetty!', 'success');
+        showToast('📧 Tarkista sähköpostisi reset-linkkiä varten');
+        showLogin();
+    }, 2000);
 }
 
-// Lataa käyttäjätiedot Supabasesta
+// Load user data from cloud
 async function loadUserData() {
     if (!currentUser) return;
 
     showSyncStatus('Ladataan käyttäjätietoja...', 'syncing');
 
     try {
-        // Lataa profiilitiedot
-        const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', currentUser.id)
-            .single();
-
-        if (profileError) throw profileError;
-
-        if (profile) {
-            // Lataa käyttäjän data
-            const { data: userData, error: dataError } = await supabase
-                .from('user_data')
-                .select('*')
-                .eq('user_id', currentUser.id)
-                .single();
-
-            if (!dataError && userData) {
-                // Lataa asetukset
-                if (userData.settings) {
-                    Object.keys(userData.settings).forEach(key => {
-                        localStorage.setItem(key, userData.settings[key]);
-                    });
-                }
-
-                // Lataa periodit
-                if (userData.periods) {
-                    Object.keys(userData.periods).forEach(periodId => {
-                        localStorage.setItem(`periodSettings_${periodId}`, JSON.stringify(userData.periods[periodId]));
-                    });
-                }
-
-                // Lataa muut tiedot
-                if (userData.homework) {
-                    homeworkList = userData.homework;
-                    localStorage.setItem('homeworkList', JSON.stringify(homeworkList));
-                }
-
-                if (userData.exams) {
-                    examList = userData.exams;
-                    localStorage.setItem('examList', JSON.stringify(examList));
-                }
-
-                if (userData.grades) {
-                    gradeList = userData.grades;
-                    localStorage.setItem('gradeList', JSON.stringify(gradeList));
-                }
-
-                if (userData.notes) {
-                    notesList = userData.notes;
-                    localStorage.setItem('notesList', JSON.stringify(notesList));
-                }
-
-                // Lataa sovellus uudelleen uusilla tiedoilla
-                initializeApp();
+        const userData = mockBackend.userData[currentUser.id];
+        
+        if (userData) {
+            // Load settings
+            if (userData.settings) {
+                Object.keys(userData.settings).forEach(key => {
+                    localStorage.setItem(key, userData.settings[key]);
+                });
             }
 
+            // Load periods
+            if (userData.periods) {
+                Object.keys(userData.periods).forEach(periodId => {
+                    localStorage.setItem(`periodSettings_${periodId}`, JSON.stringify(userData.periods[periodId]));
+                });
+            }
+
+            // Load other data
+            if (userData.homework) {
+                homeworkList = userData.homework;
+                localStorage.setItem('homeworkList', JSON.stringify(homeworkList));
+            }
+
+            if (userData.exams) {
+                examList = userData.exams;
+                localStorage.setItem('examList', JSON.stringify(examList));
+            }
+
+            if (userData.grades) {
+                gradeList = userData.grades;
+                localStorage.setItem('gradeList', JSON.stringify(gradeList));
+            }
+
+            if (userData.notes) {
+                notesList = userData.notes;
+                localStorage.setItem('notesList', JSON.stringify(notesList));
+            }
+
+            // Reload the app with new data
+            initializeApp();
+            
             showSyncStatus('Tiedot ladattu!', 'success');
         }
-
     } catch (error) {
         console.error('Error loading user data:', error);
         showSyncStatus('Virhe tiedoissa', 'error');
-        
-        // Yritä luoda profiili jos sitä ei ole
-        if (error.code === 'PGRST116') {
-            await createUserProfile(currentUser.id, 
-                currentUser.user_metadata?.name || 'Käyttäjä', 
-                currentUser.email
-            );
-        }
     }
 }
 
-// Synkronoi tiedot Supabaseen
+// Sync data to cloud
 async function syncData() {
     if (!currentUser) {
         showToast('❌ Kirjaudu sisään synkronoidaksesi');
@@ -4345,7 +4237,7 @@ async function syncData() {
     showSyncStatus('Synkronoidaan...', 'syncing');
 
     try {
-        // Kerää kaikki paikalliset tiedot
+        // Collect all local data
         const userData = {
             settings: getAllSettings(),
             periods: getAllPeriods(),
@@ -4353,62 +4245,26 @@ async function syncData() {
             exams: examList,
             grades: gradeList,
             notes: notesList,
-            last_sync: new Date().toISOString()
+            lastSync: new Date().toISOString()
         };
 
-        // Tarkista onko dataa jo olemassa
-        const { data: existingData, error: checkError } = await supabase
-            .from('user_data')
-            .select('id')
-            .eq('user_id', currentUser.id)
-            .single();
+        // Save to cloud (mock backend)
+        mockBackend.userData[currentUser.id] = userData;
+        localStorage.setItem('mockUserData', JSON.stringify(mockBackend.userData));
 
-        let upsertError;
-
-        if (checkError && checkError.code === 'PGRST116') {
-            // Ei ole olemassa - luo uusi
-            const { error } = await supabase
-                .from('user_data')
-                .insert([
-                    {
-                        user_id: currentUser.id,
-                        ...userData,
-                        created_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString()
-                    }
-                ]);
-
-            upsertError = error;
-        } else {
-            // Päivitä olemassa oleva
-            const { error } = await supabase
-                .from('user_data')
-                .update({
-                    ...userData,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('user_id', currentUser.id);
-
-            upsertError = error;
+        // Update last sync time
+        if (mockBackend.users) {
+            const userIndex = mockBackend.users.findIndex(u => u.id === currentUser.id);
+            if (userIndex !== -1) {
+                mockBackend.users[userIndex].lastSync = new Date().toISOString();
+                localStorage.setItem('mockUsers', JSON.stringify(mockBackend.users));
+            }
         }
-
-        if (upsertError) throw upsertError;
-
-        // Päivitä profiilin viimeisin synkronointiaika
-        const { error: profileError } = await supabase
-            .from('profiles')
-            .update({
-                last_sync: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', currentUser.id);
-
-        if (profileError) throw profileError;
 
         showSyncStatus('Synkronoitu!', 'success');
         showToast('✅ Tiedot synkronoitu pilveen');
         
-        // Päivitä profiilitiedot
+        // Update profile info
         updateProfileInfo();
 
     } catch (error) {
@@ -4418,192 +4274,7 @@ async function syncData() {
     }
 }
 
-// Palauta salasana
-async function resetPassword() {
-    const email = document.getElementById('forgotEmail').value.trim();
-    
-    if (!email) {
-        showToast('❌ Syötä sähköpostiosoite');
-        return;
-    }
-
-    showSyncStatus('Lähetetään reset-linkkiä...', 'syncing');
-
-    try {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: `${window.location.origin}/reset-password.html`,
-        });
-
-        if (error) throw error;
-
-        showSyncStatus('Reset-linkki lähetetty!', 'success');
-        showToast('📧 Tarkista sähköpostisi reset-linkkiä varten');
-        showLogin();
-        
-    } catch (error) {
-        console.error('Password reset error:', error);
-        showSyncStatus('Lähetys epäonnistui', 'error');
-        showToast(`❌ ${error.message}`);
-    }
-}
-
-// Päivitä authentication-UI
-function updateAuthUI() {
-    const profileBtn = document.getElementById('profileBtn');
-    const userBadge = document.querySelector('.user-badge');
-    
-    if (currentUser) {
-        // Käyttäjä on kirjautunut sisään
-        if (profileBtn) {
-            profileBtn.innerHTML = '<i class="fas fa-user" aria-hidden="true"></i><span>Profiili</span>';
-        }
-        
-        if (userBadge) {
-            const userName = currentUser.user_metadata?.name || currentUser.email || 'Käyttäjä';
-            userBadge.textContent = `👤 ${userName}`;
-            userBadge.classList.add('visible');
-            userBadge.onclick = showProfileModal;
-        }
-        
-        // Aseta automaattinen synkronointi
-        setupAutoSync();
-        
-    } else {
-        // Käyttäjä ei ole kirjautunut sisään
-        if (profileBtn) {
-            profileBtn.innerHTML = '<i class="fas fa-sign-in-alt" aria-hidden="true"></i><span>Kirjaudu</span>';
-        }
-        
-        if (userBadge) {
-            userBadge.classList.remove('visible');
-        }
-    }
-}
-
-// Päivitä profiilitiedot
-async function updateProfileInfo() {
-    if (!currentUser) return;
-
-    try {
-        // Hae päivitetyt profiilitiedot
-        const { data: profile, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', currentUser.id)
-            .single();
-
-        if (!error && profile) {
-            document.getElementById('profileName').textContent = profile.name;
-            document.getElementById('profileEmail').textContent = profile.email;
-            
-            // Laske tilastot
-            const periodCount = Object.keys(getAllPeriods()).length;
-            const lastSync = profile.last_sync ? formatLastSyncTime(profile.last_sync) : '-';
-            
-            document.getElementById('profilePeriods').textContent = periodCount;
-            document.getElementById('profileLastSync').textContent = lastSync;
-            
-            // Päivitä avatar
-            document.getElementById('profileAvatar').textContent = profile.avatar || profile.name.charAt(0).toUpperCase();
-        }
-
-    } catch (error) {
-        console.error('Profile update error:', error);
-    }
-}
-
-// Muotoile viimeisin synkronointiaika
-function formatLastSyncTime(timestamp) {
-    const lastSync = new Date(timestamp);
-    const now = new Date();
-    const diffMinutes = Math.floor((now - lastSync) / (1000 * 60));
-    
-    if (diffMinutes < 1) return 'Juuri nyt';
-    if (diffMinutes < 60) return `${diffMinutes} min sitten`;
-    if (diffMinutes < 1440) return `${Math.floor(diffMinutes / 60)} h sitten`;
-    
-    return lastSync.toLocaleDateString('fi-FI');
-}
-
-// Aseta automaattinen synkronointi
-function setupAutoSync() {
-    const autoSync = localStorage.getItem('autoSync') !== 'false';
-    
-    if (autoSync && currentUser) {
-        // Synkronoi joka 5 minuutti
-        setInterval(() => {
-            if (navigator.onLine) {
-                syncData();
-            }
-        }, 5 * 60 * 1000);
-        
-        // Synkronoi kun tullaan online-tilaan
-        window.addEventListener('online', () => {
-            syncData();
-        });
-    }
-}
-
-// Vie käyttäjätiedot
-async function exportUserData() {
-    if (!currentUser) return;
-
-    try {
-        const { data: userData, error } = await supabase
-            .from('user_data')
-            .select('*')
-            .eq('user_id', currentUser.id)
-            .single();
-
-        if (error) throw error;
-
-        const exportData = {
-            user: currentUser,
-            data: userData,
-            exportedAt: new Date().toISOString()
-        };
-        
-        const dataStr = JSON.stringify(exportData, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(dataBlob);
-        link.download = `rauman-lukio-data-${new Date().toISOString().split('T')[0]}.json`;
-        link.click();
-        
-        showToast('📤 Tiedot vietu onnistuneesti');
-        
-    } catch (error) {
-        console.error('Export error:', error);
-        showToast('❌ Tietojen vienti epäonnistui');
-    }
-}
-
-// Näytä synkronoinnin tila
-function showSyncStatus(message, type) {
-    let statusEl = document.querySelector('.sync-status');
-    if (!statusEl) {
-        statusEl = document.createElement('div');
-        statusEl.className = 'sync-status';
-        document.body.appendChild(statusEl);
-    }
-    
-    statusEl.textContent = message;
-    statusEl.className = `sync-status ${type}`;
-    statusEl.style.display = 'block';
-    
-    setTimeout(() => {
-        statusEl.style.display = 'none';
-    }, 3000);
-}
-
-// Apufunktiot
-function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-}
-
-// Hae kaikki asetukset localStorageista
+// Get all settings from localStorage
 function getAllSettings() {
     const settings = {};
     const settingKeys = [
@@ -4621,7 +4292,7 @@ function getAllSettings() {
     return settings;
 }
 
-// Hae kaikki periodit localStorageista
+// Get all periods from localStorage
 function getAllPeriods() {
     const periods = {};
     for (let i = 1; i <= 5; i++) {
@@ -4633,12 +4304,164 @@ function getAllPeriods() {
     return periods;
 }
 
-// Kääri funktiot automaattisynkronoinnilla
+// Update authentication UI
+function updateAuthUI() {
+    const profileBtn = document.getElementById('profileBtn');
+    const userBadge = document.querySelector('.user-badge');
+    
+    if (currentUser) {
+        // User is logged in
+        if (profileBtn) {
+            profileBtn.innerHTML = '<i class="fas fa-user" aria-hidden="true"></i><span>Profiili</span>';
+        }
+        
+        if (userBadge) {
+            userBadge.textContent = `👤 ${currentUser.name}`;
+            userBadge.classList.add('visible');
+            userBadge.onclick = showProfileModal;
+        }
+        
+        // Setup auto-sync
+        setupAutoSync();
+        
+    } else {
+        // User is not logged in
+        if (profileBtn) {
+            profileBtn.innerHTML = '<i class="fas fa-sign-in-alt" aria-hidden="true"></i><span>Kirjaudu</span>';
+        }
+        
+        if (userBadge) {
+            userBadge.classList.remove('visible');
+        }
+    }
+}
+
+// Update profile information
+function updateProfileInfo() {
+    if (!currentUser) return;
+
+    document.getElementById('profileName').textContent = currentUser.name;
+    document.getElementById('profileEmail').textContent = currentUser.email;
+    
+    // Calculate stats
+    const periodCount = Object.keys(getAllPeriods()).length;
+    const lastSync = getLastSyncTime();
+    
+    document.getElementById('profilePeriods').textContent = periodCount;
+    document.getElementById('profileLastSync').textContent = lastSync;
+    
+    // Update avatar with first letter
+    const firstLetter = currentUser.name.charAt(0).toUpperCase();
+    document.getElementById('profileAvatar').textContent = firstLetter;
+}
+
+// Get last sync time
+function getLastSyncTime() {
+    if (!currentUser || !mockBackend.users) return '-';
+    
+    const user = mockBackend.users.find(u => u.id === currentUser.id);
+    if (!user || !user.lastSync) return '-';
+    
+    const lastSync = new Date(user.lastSync);
+    const now = new Date();
+    const diffMinutes = Math.floor((now - lastSync) / (1000 * 60));
+    
+    if (diffMinutes < 1) return 'Juuri nyt';
+    if (diffMinutes < 60) return `${diffMinutes} min sitten`;
+    if (diffMinutes < 1440) return `${Math.floor(diffMinutes / 60)} h sitten`;
+    
+    return lastSync.toLocaleDateString('fi-FI');
+}
+
+// Setup auto-sync
+function setupAutoSync() {
+    const autoSync = localStorage.getItem('autoSync') !== 'false';
+    
+    if (autoSync && currentUser) {
+        // Sync every 5 minutes
+        setInterval(() => {
+            if (navigator.onLine) {
+                syncData();
+            }
+        }, 5 * 60 * 1000);
+        
+        // Sync when coming online
+        window.addEventListener('online', () => {
+            syncData();
+        });
+    }
+}
+
+// Export user data
+function exportUserData() {
+    const userData = {
+        user: currentUser,
+        settings: getAllSettings(),
+        periods: getAllPeriods(),
+        homework: homeworkList,
+        exams: examList,
+        grades: gradeList,
+        notes: notesList,
+        exportedAt: new Date().toISOString()
+    };
+    
+    const dataStr = JSON.stringify(userData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(dataBlob);
+    link.download = `rauman-lukio-data-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    
+    showToast('📤 Tiedot vietu onnistuneesti');
+}
+
+// Show sync status
+function showSyncStatus(message, type) {
+    let statusEl = document.querySelector('.sync-status');
+    if (!statusEl) {
+        statusEl = document.createElement('div');
+        statusEl.className = 'sync-status';
+        document.body.appendChild(statusEl);
+    }
+    
+    statusEl.textContent = message;
+    statusEl.className = `sync-status ${type}`;
+    
+    setTimeout(() => {
+        statusEl.style.display = 'none';
+    }, 3000);
+}
+
+// Utility functions
+function generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
+
+function generateToken() {
+    return Math.random().toString(36).substr(2) + Math.random().toString(36).substr(2);
+}
+
+async function hashPassword(password) {
+    // In real app, use proper hashing like bcrypt
+    // This is just a simple demo version
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hash = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+// Modify existing functions to auto-sync when user is logged in
 function wrapWithSync(originalFunction) {
     return function(...args) {
         const result = originalFunction.apply(this, args);
         
-        // Automaattinen synkronointi datan muutosten jälkeen
+        // Auto-sync after data changes if user is logged in
         if (currentUser && localStorage.getItem('autoSync') !== 'false') {
             setTimeout(syncData, 1000);
         }
@@ -4647,7 +4470,7 @@ function wrapWithSync(originalFunction) {
     };
 }
 
-// Kääri dataa muuttavat funktiot synkronoinnilla
+// Wrap data-modifying functions with auto-sync
 const syncWrappedFunctions = [
     'savePeriodSettings',
     'saveMeals',
@@ -4670,7 +4493,7 @@ syncWrappedFunctions.forEach(funcName => {
     }
 });
 
-// Alusta auth-järjestelmä kun sovellus latautuu
+// Initialize auth system when app loads
 document.addEventListener('DOMContentLoaded', function() {
     initializeAuth();
 });
