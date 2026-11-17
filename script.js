@@ -4134,20 +4134,6 @@ function closeNotesManager() {
     document.getElementById('notesModal').style.display = 'none';
 }
 
-// Lisää tämä funktio
-function editNote(id) {
-    const note = notesList.find(n => n.id === id);
-    if (note) {
-        document.getElementById('noteTitle').value = note.title;
-        document.getElementById('noteContent').value = note.content;
-        document.getElementById('noteCategory').value = note.category;
-        
-        window.editingNoteId = id;
-        
-        showToast("✏️ Muokkaa muistiinpanoa ja paina 'Lisää muistiinpano' tallentaaksesi");
-    }
-}
-
 // Päivitä addNote-funktio
 function addNote() {
     const title = document.getElementById('noteTitle').value.trim();
@@ -4240,7 +4226,6 @@ function editNote(id) {
         document.getElementById('noteContent').value = note.content;
         document.getElementById('noteCategory').value = note.category;
         
-        // POISTA: deleteNote(id);
         window.editingNoteId = id;
         
         showToast("✏️ Muokkaa muistiinpanoa ja paina 'Lisää muistiinpano' tallentaaksesi");
