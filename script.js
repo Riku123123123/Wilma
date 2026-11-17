@@ -677,11 +677,6 @@ function loadPeriodSettings(periodId) {
     updateStatistics();
 }
 
-function savePeriodSettings(periodId) {
-    const periodSettings = { subjects: subjects };
-    localStorage.setItem(`periodSettings_${periodId}`, JSON.stringify(periodSettings));
-}
-
 // ========== NYKYISEN JÄRJESTYKSEN TALLENNUS ==========
 function saveCurrentSchedule() {
     const targetSlot = prompt("Mihin periodiin haluat tallentaa nykyisen lukujärjestyksen?\n\nSyötä numero 1-5:", String(currentScheduleSlot));
@@ -696,10 +691,11 @@ function saveCurrentSchedule() {
 
 // ========== LUKUJÄRJESTYKSEN GENEROINTI ==========
 function generateTimetable() {
-    // valitse käytettävä asettelu valitun periodin mukaan
     const periodSelect = document.getElementById('periodSelect');
-    const currentPeriod = periodSelect ? parseInt(periodSelect.value, 10) : 2;
-    const activeSchedule = currentPeriod >= 4 ? scheduleLate : schedule;
+    const currentPeriod = periodSelect ? parseInt(periodSelect.value, 10) : currentScheduleSlot;
+    
+    const periodSettings = JSON.parse(localStorage.getItem(`periodSettings_${currentPeriod}`)) || {};
+    const activeSchedule = periodSettings.customSchedule || (currentPeriod >= 4 ? scheduleLate : schedule);
 
     const timetable = document.getElementById("timetable");
     if (!timetable) return;
@@ -707,7 +703,6 @@ function generateTimetable() {
     const days = ["", "Maanantai", "Tiistai", "Keskiviikko", "Torstai", "Perjantai"];
     timetable.innerHTML = "";
 
-    // Hae yksittäiset tapahtumat
     const singleEvents = JSON.parse(localStorage.getItem('singleEvents')) || [];
 
     for (let d = 1; d <= 5; d++) {
@@ -718,9 +713,9 @@ function generateTimetable() {
 
         const container = dayCard.querySelector(".lessons-container");
 
-        // Lisää normaalit oppitunnit
-        activeSchedule[d].forEach(item => {
+        (activeSchedule[d] || []).forEach(item => {
             const subj = subjects[item.row];
+            if (!subj) return;
             const time = times[item.hour - 1];
             const [startHour, startMin] = time.split(" - ")[0].split(":").map(Number);
 
@@ -738,12 +733,9 @@ function generateTimetable() {
                 </div>`;
         });
 
-        // Lisää yksittäiset tapahtumat tälle päivälle
         const dayEvents = singleEvents.filter(event => event.day === d);
         dayEvents.forEach(event => {
-            const [startHour, startMin] = event.time.split(":").map(Number);
             const endTime = calculateEndTime(event.time, event.duration);
-            
             container.innerHTML += `
                 <div class="lesson event single-event" data-time="${event.time}" data-duration="${event.duration}" data-event-id="${event.id}">
                     <div class="lesson-header">
@@ -763,10 +755,8 @@ function generateTimetable() {
                 </div>`;
         });
 
-        // Järjestä oppitunnit ajan mukaan
         sortLessonsByTime(container);
 
-        // Lisää ruokalista
         const meals = JSON.parse(localStorage.getItem("meals")) || {};
         const mealKeys = ["mon", "tue", "wed", "thu", "fri"];
         const mealText = meals[mealKeys[d - 1]] || "Ei ruokalistaa";
@@ -775,22 +765,19 @@ function generateTimetable() {
         timetable.appendChild(dayCard);
     }
 
-    // Lisää klikkikuuntelijat tunneille
     document.querySelectorAll('.lesson').forEach(lesson => {
         lesson.addEventListener('click', function(e) {
-            // Estä klikkausta, jos klikattiin poistonappia
             if (e.target.closest('.delete-event-btn')) return;
-            
             const subject = this.querySelector('.lesson-subject').textContent;
             const time = this.querySelector('.lesson-time').textContent;
             const room = this.querySelector('.lesson-room')?.textContent || 'Ei tietoa';
             const teacher = this.querySelector('.lesson-teacher')?.textContent || 'Ei tietoa';
             const code = this.querySelector('.lesson-code')?.textContent || '';
-            
             alert(`Oppitunnin tiedot:\n${subject}${code ? ` (${code})` : ''}\nAika: ${time}\nSali: ${room}\nOpettaja: ${teacher}`);
         });
     });
 }
+
 
 // ========== KELLO JA SÄÄ ==========
 function updateClock() {
@@ -1670,16 +1657,32 @@ function exportSchedule() {
 function importSchedule() {
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
-    fileInput.accept = '.json,.txt';
+    fileInput.accept = '.json,.txt,.ics';
     fileInput.style.display = 'none';
     
     fileInput.addEventListener('change', function(event) {
         const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const content = e.target.result;
+            
+            if (file.name.endsWith('.ics') || content.includes('BEGIN:VCALENDAR')) {
                 try {
-                    const importedData = JSON.parse(e.target.result);
+                    const parsedData = parseWilmaICS(content);
+                    const scheduleDataElement = document.getElementById('scheduleData');
+                    if (scheduleDataElement) {
+                        scheduleDataElement.value = JSON.stringify(parsedData, null, 2);
+                    }
+                    showToast('📅 Wilman lukujärjestys luettu! Paina "Käytä tuotua järjestystä".');
+                } catch (err) {
+                    console.error(err);
+                    showToast('❌ Virhe Wilma-tiedoston lukemisessa: ' + err.message);
+                }
+            } else {
+                try {
+                    const importedData = JSON.parse(content);
                     const scheduleDataElement = document.getElementById('scheduleData');
                     if (scheduleDataElement) {
                         scheduleDataElement.value = JSON.stringify(importedData, null, 2);
@@ -1688,14 +1691,209 @@ function importSchedule() {
                 } catch (error) {
                     showToast('❌ Virheellinen tiedostomuoto');
                 }
-            };
-            reader.readAsText(file);
-        }
+            }
+        };
+        reader.readAsText(file);
     });
     
     document.body.appendChild(fileInput);
     fileInput.click();
     document.body.removeChild(fileInput);
+}
+
+function parseWilmaICS(icsText) {
+    const editSelect = document.getElementById('editPeriodSelect');
+    const periodSelect = document.getElementById('periodSelect');
+    const targetPeriodId = editSelect ? parseInt(editSelect.value, 10) : (periodSelect ? parseInt(periodSelect.value, 10) : 1);
+    
+    let periodStart = null;
+    let periodEnd = null;
+    if (periods[targetPeriodId]) {
+        const [sd, sm, sy] = periods[targetPeriodId].start.split('.').map(Number);
+        const [ed, em, ey] = periods[targetPeriodId].end.split('.').map(Number);
+        periodStart = new Date(sy, sm - 1, sd);
+        periodEnd = new Date(ey, em - 1, ed, 23, 59, 59);
+    }
+
+    const rawEvents = icsText.split('BEGIN:VEVENT');
+    const parsedEvents = [];
+
+    for (let i = 1; i < rawEvents.length; i++) {
+        const block = rawEvents[i];
+        
+        // Otetaan vain varsinaiset oppitunnit (ohitetaan ruokailut ja pajat)
+        const categoryMatch = block.match(/CATEGORIES:(.*)/);
+        if (!categoryMatch || !categoryMatch[1].includes('Education')) continue;
+
+        const dtStartMatch = block.match(/DTSTART(?:;TZID=[^:]+)?:(\d{8}T\d{6})/);
+        const summaryMatch = block.match(/SUMMARY:(.*)/);
+        const descMatch = block.match(/DESCRIPTION:(.*)/);
+        const locMatch = block.match(/LOCATION:(.*)/);
+
+        if (!dtStartMatch || !summaryMatch) continue;
+
+        const dtStr = dtStartMatch[1];
+        const year = parseInt(dtStr.substring(0, 4), 10);
+        const month = parseInt(dtStr.substring(4, 6), 10) - 1;
+        const day = parseInt(dtStr.substring(6, 8), 10);
+        const hour = parseInt(dtStr.substring(9, 11), 10);
+        const minute = parseInt(dtStr.substring(11, 13), 10);
+
+        const eventDate = new Date(year, month, day, hour, minute);
+        const dayOfWeek = eventDate.getDay();
+        if (dayOfWeek < 1 || dayOfWeek > 5) continue;
+
+        // Kartoitetaan kellonaika oppituntiin 1-4
+        let slotHour = null;
+        const timeInMins = hour * 60 + minute;
+        if (timeInMins >= 480 && timeInMins <= 515) slotHour = 1;      // 08:10
+        else if (timeInMins >= 550 && timeInMins <= 600) slotHour = 2; // 09:40
+        else if (timeInMins >= 705 && timeInMins <= 750) slotHour = 3; // 12:05
+        else if (timeInMins >= 780 && timeInMins <= 830) slotHour = 4; // 13:35
+        
+        if (!slotHour) continue;
+
+        const rawSummary = summaryMatch[1].trim();
+        const codeMatch = rawSummary.match(/^([^\s(]+)/);
+        const courseCode = codeMatch ? codeMatch[1] : rawSummary;
+        
+        if (courseCode.startsWith('RO.')) continue;
+
+        // Luokka sulkeista, esim. "MAA11.2 (MHEL) (C142)" -> "C142"
+        let room = "";
+        const parenMatches = [...rawSummary.matchAll(/\(([^)]+)\)/g)];
+        if (parenMatches.length >= 2) {
+            room = parenMatches[parenMatches.length - 1][1];
+        } else if (locMatch) {
+            room = locMatch[1].trim().split(' ')[0];
+        }
+
+        // Opettajan nimi DESCRIPTION-kentästä
+        let teacher = parenMatches.length >= 1 ? parenMatches[0][1] : "";
+        if (descMatch) {
+            const descLines = descMatch[1].split('\\n');
+            if (descLines.length >= 2 && descLines[1].includes(' ')) {
+                const teacherParts = descLines[1].trim().split(' ');
+                teacher = teacherParts.slice(1).join(' ') || teacher;
+            }
+        }
+
+        parsedEvents.push({
+            date: eventDate,
+            dayOfWeek,
+            slotHour,
+            code: courseCode,
+            teacher,
+            room
+        });
+    }
+
+    if (parsedEvents.length === 0) {
+        throw new Error("Tiedostosta ei löytynyt oppitunteja.");
+    }
+
+    // Suodatetaan valitun periodin tunnit
+    let filteredEvents = [];
+    if (periodStart && periodEnd) {
+        filteredEvents = parsedEvents.filter(e => e.date >= periodStart && e.date <= periodEnd);
+    }
+
+    // Jos periodin päivämäärät eivät täsmää, otetaan tiedoston alusta 2 viikon jakso
+    if (filteredEvents.length === 0) {
+        parsedEvents.sort((a, b) => a.date - b.date);
+        const firstDate = parsedEvents[0].date;
+        const weekEnd = new Date(firstDate.getTime() + 14 * 24 * 60 * 60 * 1000);
+        filteredEvents = parsedEvents.filter(e => e.date >= firstDate && e.date <= weekEnd);
+    }
+
+    const courseMap = new Map();
+    const subjectsObj = {};
+    const customScheduleObj = { 1: [], 2: [], 3: [], 4: [], 5: [] };
+
+    filteredEvents.forEach(ev => {
+        if (!courseMap.has(ev.code) && courseMap.size < 7) {
+            const rowNum = courseMap.size + 1;
+            courseMap.set(ev.code, rowNum);
+            subjectsObj[rowNum] = {
+                name: getSubjectFullName(ev.code),
+                code: ev.code,
+                teacher: ev.teacher,
+                room: ev.room,
+                color: detectSubjectColor(ev.code)
+            };
+        }
+
+        const rowNum = courseMap.get(ev.code);
+        if (rowNum) {
+            const exists = customScheduleObj[ev.dayOfWeek].some(item => item.hour === ev.slotHour);
+            if (!exists) {
+                customScheduleObj[ev.dayOfWeek].push({ row: rowNum, hour: ev.slotHour });
+            }
+        }
+    });
+
+    for (let r = 1; r <= 7; r++) {
+        if (!subjectsObj[r]) {
+            subjectsObj[r] = { name: "(Ei asetettu)", code: "", teacher: "", room: "", color: "default" };
+        }
+    }
+
+    for (let d = 1; d <= 5; d++) {
+        customScheduleObj[d].sort((a, b) => a.hour - b.hour);
+    }
+
+    return {
+        period: targetPeriodId,
+        subjects: subjectsObj,
+        customSchedule: customScheduleObj,
+        source: "Wilma iCal",
+        importedAt: new Date().toISOString()
+    };
+}
+
+function detectSubjectColor(code) {
+    const c = code.toUpperCase();
+    if (c.startsWith('MA')) return 'math';
+    if (c.startsWith('ÄI')) return 'finnish';
+    if (c.startsWith('EN')) return 'english';
+    if (c.startsWith('RU')) return 'swedish';
+    if (c.startsWith('FY') || c.startsWith('KE')) return 'physics';
+    if (c.startsWith('GE')) return 'geography';
+    if (c.startsWith('BI')) return 'biology';
+    if (c.startsWith('TE')) return 'health';
+    if (c.startsWith('PS')) return 'psychology';
+    if (c.startsWith('YH')) return 'economics';
+    if (c.startsWith('HI')) return 'history';
+    if (c.startsWith('UE') || c.startsWith('ET')) return 'religion';
+    if (c.startsWith('FI')) return 'philosophy';
+    if (c.startsWith('LI')) return 'sports';
+    if (c.startsWith('KU') || c.startsWith('MU')) return 'arts';
+    return 'default';
+}
+
+function getSubjectFullName(code) {
+    const c = code.toUpperCase();
+    if (c.startsWith('MAA')) return 'Matematiikka (pitkä)';
+    if (c.startsWith('MAB')) return 'Matematiikka (lyhyt)';
+    if (c.startsWith('MA')) return 'Matematiikka';
+    if (c.startsWith('ÄI')) return 'Äidinkieli';
+    if (c.startsWith('ENA')) return 'Englanti';
+    if (c.startsWith('RUB')) return 'Ruotsi';
+    if (c.startsWith('FY')) return 'Fysiikka';
+    if (c.startsWith('KE')) return 'Kemia';
+    if (c.startsWith('BI')) return 'Biologia';
+    if (c.startsWith('GE')) return 'Maantieto';
+    if (c.startsWith('TE')) return 'Terveystieto';
+    if (c.startsWith('PS')) return 'Psykologia';
+    if (c.startsWith('YH')) return 'Yhteiskuntaoppi';
+    if (c.startsWith('HI')) return 'Historia';
+    if (c.startsWith('UE')) return 'Uskonto';
+    if (c.startsWith('ET')) return 'Elämänkatsomustieto';
+    if (c.startsWith('FI')) return 'Filosofia';
+    if (c.startsWith('LI')) return 'Liikunta';
+    if (c.startsWith('KU')) return 'Kuvataide';
+    if (c.startsWith('MU')) return 'Musiikki';
+    return code;
 }
 
 function applyImportedSchedule() {
@@ -1707,28 +1905,13 @@ function applyImportedSchedule() {
         }
         
         const importedData = JSON.parse(importedDataText);
+        let subjectsData = importedData.subjects ? importedData.subjects : importedData;
         
-        let subjectsData;
-        
-        // Tarkista datan muoto
-        if (importedData.subjects && typeof importedData.subjects === 'object') {
-            // Uusi muoto: { period: 2, subjects: { ... } }
-            subjectsData = importedData.subjects;
-        } else if (typeof importedData === 'object' && importedData['1'] && importedData['1'].name) {
-            // Vanha muoto: suora subjects-objekti
-            subjectsData = importedData;
-        } else {
-            showToast('❌ Tuntematon lukujärjestysmuoto');
-            return;
-        }
-        
-        // Tarkista että data on kelvollinen
         if (!subjectsData || typeof subjectsData !== 'object') {
             showToast('❌ Virheellinen lukujärjestysdata');
             return;
         }
         
-        // Varmista että kaikki 7 riviä on olemassa
         const completeSubjects = {};
         for (let i = 1; i <= 7; i++) {
             if (subjectsData[i]) {
@@ -1740,44 +1923,54 @@ function applyImportedSchedule() {
                     color: subjectsData[i].color || "default"
                 };
             } else {
-                // Täytä puuttuvat rivit oletusarvoilla
-                completeSubjects[i] = { 
-                    name: "(Ei asetettu)", 
-                    code: "", 
-                    teacher: "", 
-                    room: "", 
-                    color: "default" 
-                };
+                completeSubjects[i] = { name: "(Ei asetettu)", code: "", teacher: "", room: "", color: "default" };
             }
         }
         
-        // Päivitä globaali subjects
         subjects = completeSubjects;
         localStorage.setItem("customSubjects", JSON.stringify(subjects));
         
-        // Tallenna nykyiseen periodiin
         const periodSelect = document.getElementById('periodSelect');
-        const currentPeriod = periodSelect ? parseInt(periodSelect.value) : currentScheduleSlot;
-        savePeriodSettings(currentPeriod);
+        const currentPeriod = periodSelect ? parseInt(periodSelect.value, 10) : currentScheduleSlot;
         
-        // Päivitä näkymä
+        const periodSettings = { 
+            subjects: subjects,
+            customSchedule: importedData.customSchedule || null
+        };
+        localStorage.setItem(`periodSettings_${currentPeriod}`, JSON.stringify(periodSettings));
+        
+        const slotElement = document.querySelector(`.schedule-slot[data-slot="${currentPeriod}"]`);
+        const periodName = periods[currentPeriod] ? periods[currentPeriod].name : `Periodi ${currentPeriod}`;
+        if (slotElement) {
+            slotElement.innerHTML = `<span>${periodName}</span><i class="fas fa-check"></i>`;
+            slotElement.classList.add('saved');
+        }
+
         generateTimetable();
         updateStatistics();
+        renderScheduleEditor();
         
-        showToast('✅ Tuotu lukujärjestys ladattu onnistuneesti!');
+        showToast('✅ Lukujärjestys ladattu onnistuneesti!');
         
-        // Sulje asetukset 2 sekunnin kuluttua
         setTimeout(() => {
             const settingsModal = document.getElementById('settingsModal');
-            if (settingsModal) {
-                settingsModal.style.display = "none";
-            }
-        }, 2000);
+            if (settingsModal) settingsModal.style.display = "none";
+        }, 1500);
         
     } catch (error) {
         showToast('❌ Virhe lukujärjestyksen lataamisessa: ' + error.message);
     }
 }
+
+function savePeriodSettings(periodId) {
+    const existing = JSON.parse(localStorage.getItem(`periodSettings_${periodId}`)) || {};
+    const periodSettings = { 
+        subjects: subjects,
+        customSchedule: existing.customSchedule || null
+    };
+    localStorage.setItem(`periodSettings_${periodId}`, JSON.stringify(periodSettings));
+}
+
 
 // ========== YKSITTÄISET TAPAHTUMAT ==========
 function initializeEventDates() {
