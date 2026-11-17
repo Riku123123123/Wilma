@@ -905,28 +905,6 @@ function generateTimetable() {
     }
 }
 
-function updateStatistics() {
-    const totalLessonsEl = document.getElementById('totalLessons');
-    const sportsLessonsEl = document.getElementById('sportsLessons');
-    const freeLessonsEl = document.getElementById('freeLessons');
-    if (!totalLessonsEl || !sportsLessonsEl || !freeLessonsEl) return;
-    
-    const wilmaEvents = JSON.parse(localStorage.getItem('wilmaCalendarEvents'));
-    if (Array.isArray(wilmaEvents) && wilmaEvents.length > 0) {
-        const weekDates = getWeekDates(currentWeekOffset);
-        const weekISOs = weekDates.map(d => formatDateISO(d));
-        const weekLessons = wilmaEvents.filter(ev => weekISOs.includes(ev.dateStr));
-        const totalLessons = weekLessons.length;
-        const sportsLessons = weekLessons.filter(ev => ev.color === 'sports').length;
-        const freeLessons = Math.max(0, 20 - totalLessons);
-
-        totalLessonsEl.textContent = `${totalLessons} oppituntia`;
-        sportsLessonsEl.textContent = `${sportsLessons} liikuntaa`;
-        freeLessonsEl.textContent = `${freeLessons} vapaata`;
-    }
-    updateNextLessonInfo();
-}
-
 function parseICSDate(dtStr) {
     return new Date(
         parseInt(dtStr.substring(0, 4), 10),
@@ -1888,8 +1866,6 @@ function exportSchedule() {
 }
 
 // ========== VIIKKOKOHTAINEN WILMA-KALENTERI ==========
-
-let currentWeekOffset = 0;
 
 function importSchedule() {
     const fileInput = document.createElement('input');
