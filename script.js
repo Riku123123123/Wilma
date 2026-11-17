@@ -829,9 +829,13 @@ function generateTimetable() {
                             </div>
                         </div>`;
                 });
-                if (!isExamWeek) {
+                                if (!isExamWeek) {
                     standardSlots.forEach(slot => {
-                        if (slot.startMins >= firstLessonStart && slot.endMins <= lastLessonEnd) {
+                        // Näytetään hyppytunti joko päivän keskellä TAI heti aamusta klo 08:10-09:25, jos päivänä on muuten tunteja
+                        const isMorningSlot = slot.startMins === 490;
+                        const isBetweenLessons = slot.startMins >= firstLessonStart && slot.endMins <= lastLessonEnd;
+
+                        if (isMorningSlot || isBetweenLessons) {
                             const hasOverlap = lessonIntervals.some(li => 
                                 (li.startMins < slot.endMins - 10) && (li.endMins > slot.startMins + 10)
                             );
