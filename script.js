@@ -218,58 +218,6 @@ function initializeFontListeners() {
     }, 100);
 }
 
-function applyFontImmediately(fontFamily) {
-    
-    try {
-        // 1. Päivitä body fontti
-        document.body.style.fontFamily = fontFamily;
-        
-        // 2. Päivitä kaikki tärkeät elementit
-        const selectors = [
-            'body',
-            '.modal',
-            '.modal-content',
-            '#settingsModal',
-            '.settings-content',
-            '.settings-tab',
-            '.setting-group',
-            'input',
-            'select',
-            'textarea',
-            'button',
-            '.btn',
-            '.nav-item',
-            '.day-card',
-            '.lesson',
-            '.tool-card',
-            '.homework-item',
-            '.exam-item',
-            '.grade-item',
-            '.note-item'
-        ];
-        
-        selectors.forEach(selector => {
-            try {
-                const elements = document.querySelectorAll(selector);
-                elements.forEach(el => {
-                    el.style.fontFamily = fontFamily;
-                });
-            } catch (e) {
-                console.warn(`Ei voitu päivittää fonttia selectorille: ${selector}`);
-            }
-        });
-        
-        // 3. Pakota uudelleenrenderöinti
-        document.body.style.display = 'none';
-        document.body.offsetHeight; // Trigger reflow
-        document.body.style.display = '';
-        
-        
-    } catch (error) {
-        console.error('Virhe fontin soveltamisessa:', error);
-    }
-}
-
 function updateAllFonts(fontFamily) {
     try {
         
@@ -729,12 +677,49 @@ function getISOWeekNumber(date) {
     return Math.ceil((((temp - yearStart) / 86400000) + 1) / 7);
 }
 
+function toggleWilmaReservations(checked) {
+    localStorage.setItem('showWilmaReservations', checked ? 'true' : 'false');
+    generateTimetable();
+    updateStatistics();
+}
+
+function injectReservationToggleInSettings() {
+    const tabSchedule = document.getElementById('tab-schedule');
+    if (!tabSchedule || document.getElementById('wilmaReservationsToggleContainer')) return;
+
+    const showRes = localStorage.getItem('showWilmaReservations') === 'true';
+    const box = document.createElement('div');
+    box.id = 'wilmaReservationsToggleContainer';
+    box.style.cssText = 'margin: 12px 0; padding: 12px; border-radius: 10px; background: rgba(67, 97, 238, 0.08); border: 1px solid rgba(67, 97, 238, 0.25);';
+    box.innerHTML = `
+        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500;">
+            <input type="checkbox" id="showWilmaReservationsChk" ${showRes ? 'checked' : ''} onchange="toggleWilmaReservations(this.checked)" style="width: 18px; height: 18px;">
+            <span>Näytä Wilman ruokailuvuorot ja tukipajat lukujärjestyksessä</span>
+        </label>
+    `;
+    tabSchedule.insertBefore(box, tabSchedule.firstChild);
+}
+
+function getPendingHomeworkCountForSubject(subjectName) {
+    if (!Array.isArray(homeworkList) || !subjectName) return 0;
+    const cleanTarget = subjectName.toLowerCase().split('(')[0].trim();
+    return homeworkList.filter(hw => {
+        if (hw.completed) return false;
+        const hwSubj = hw.subject.toLowerCase().trim();
+        return hwSubj.includes(cleanTarget) || cleanTarget.includes(hwSubj);
+    }).length;
+}
+
+
 function generateTimetable() {
     const timetable = document.getElementById("timetable");
     if (!timetable) return;
 
+    injectReservationToggleInSettings();
+
     const wilmaEvents = JSON.parse(localStorage.getItem('wilmaCalendarEvents'));
     const useWilmaCalendar = Array.isArray(wilmaEvents) && wilmaEvents.length > 0;
+    const showReservations = localStorage.getItem('showWilmaReservations') === 'true';
 
     if (useWilmaCalendar) {
         updatePeriodSelectorUI();
@@ -791,33 +776,49 @@ function generateTimetable() {
         const container = dayCard.querySelector(".lessons-container");
 
         if (useWilmaCalendar) {
-            const todaysLessons = wilmaEvents.filter(ev => ev.dateStr === dateISO);
+            const todaysLessons = wilmaEvents.filter(ev => {
+                if (ev.dateStr !== dateISO) return false;
+                if (ev.isReservation && !showReservations) return false;
+                return true;
+            });
+
+            const educationOnly = todaysLessons.filter(ev => !ev.isReservation);
             
             if (todaysLessons.length === 0) {
                 container.innerHTML = `<div style="padding: 15px; text-align: center; opacity: 0.6; font-size: 0.9rem;">Ei oppitunteja</div>`;
             } else {
-                const lessonIntervals = todaysLessons.map(ev => {
+                const lessonIntervals = educationOnly.map(ev => {
                     const [sh, sm] = ev.startTime.split(':').map(Number);
                     const [eh, em] = ev.endTime.split(':').map(Number);
                     return { startMins: sh * 60 + sm, endMins: eh * 60 + em };
                 });
 
-                const firstLessonStart = Math.min(...lessonIntervals.map(i => i.startMins));
-                const lastLessonEnd = Math.max(...lessonIntervals.map(i => i.endMins));
+                const firstLessonStart = lessonIntervals.length > 0 ? Math.min(...lessonIntervals.map(i => i.startMins)) : 9999;
+                const lastLessonEnd = lessonIntervals.length > 0 ? Math.max(...lessonIntervals.map(i => i.endMins)) : 0;
 
                 todaysLessons.forEach(ev => {
                     const [startHour, startMin] = ev.startTime.split(":").map(Number);
-                    const isExam = ev.duration >= 120;
+                    const isExam = !ev.isReservation && ev.duration >= 120;
                     const scaleFactor = Math.max(1, ev.duration / 75);
-                    const heightStyle = isExam 
-                        ? `min-height: ${Math.round(95 * scaleFactor)}px; display: flex; flex-direction: column; justify-content: space-between; border-left: 5px solid #ff5722;` 
+                    
+                    let customStyle = '';
+                    if (isExam) {
+                        customStyle = `min-height: ${Math.round(95 * scaleFactor)}px; display: flex; flex-direction: column; justify-content: space-between; border-left: 5px solid #ff5722;`;
+                    } else if (ev.isReservation) {
+                        customStyle = `opacity: 0.85; padding: 8px 12px; font-size: 0.9em;`;
+                    }
+
+                    const hwCount = !ev.isReservation ? getPendingHomeworkCountForSubject(ev.name) : 0;
+                    const hwBadge = hwCount > 0 
+                        ? `<span style="background: #ff9800; color: #fff; font-size: 0.72rem; padding: 2px 6px; border-radius: 10px; margin-left: 6px; font-weight: 600;">📝 ${hwCount} tehtävä${hwCount > 1 ? 'ä' : ''}</span>` 
                         : '';
 
                     container.innerHTML += `
-                        <div class="lesson ${ev.color}" data-time="${startHour}:${startMin}" data-duration="${ev.duration}" style="${heightStyle}">
+                        <div class="lesson ${ev.color}" data-time="${startHour}:${startMin}" data-duration="${ev.duration}" style="${customStyle}">
                             <span class="lesson-time">
                                 ${ev.startTime} - ${ev.endTime} 
                                 ${isExam ? '<strong style="margin-left: 6px; color: #ff5722;">📝 KOE</strong>' : ''}
+                                ${hwBadge}
                             </span>
                             <div class="lesson-main">
                                 <span class="lesson-subject">${ev.name}</span>
@@ -829,9 +830,8 @@ function generateTimetable() {
                             </div>
                         </div>`;
                 });
-                                if (!isExamWeek) {
+                if (!isExamWeek && educationOnly.length > 0) {
                     standardSlots.forEach(slot => {
-                        // Näytetään hyppytunti joko päivän keskellä TAI heti aamusta klo 08:10-09:25, jos päivänä on muuten tunteja
                         const isMorningSlot = slot.startMins === 490;
                         const isBetweenLessons = slot.startMins >= firstLessonStart && slot.endMins <= lastLessonEnd;
 
@@ -907,6 +907,38 @@ function generateTimetable() {
 
         timetable.appendChild(dayCard);
     }
+
+    // Tyylikäs oppitunnin tietojen modaali alert()-ikkunan sijaan
+    document.querySelectorAll('.lesson').forEach(lesson => {
+        lesson.addEventListener('click', function(e) {
+            if (e.target.closest('.delete-event-btn')) return;
+            
+            const subject = this.querySelector('.lesson-subject')?.textContent || 'Oppitunti';
+            const time = this.querySelector('.lesson-time')?.textContent.trim() || '';
+            const room = this.querySelector('.lesson-room')?.textContent.trim() || 'Ei tietoa';
+            const teacher = this.querySelector('.lesson-teacher')?.textContent.trim() || 'Ei tietoa';
+            const code = this.querySelector('.lesson-code')?.textContent.trim() || '';
+
+            const modalHtml = `
+                <div class="modal-header">
+                    <h2>📚 ${subject} ${code ? `(${code})` : ''}</h2>
+                    <button class="close-btn" onclick="closeModal()">&times;</button>
+                </div>
+                <div class="modal-body" style="padding: 15px; line-height: 1.8;">
+                    <p><strong><i class="fas fa-clock"></i> Aika:</strong> ${time}</p>
+                    <p><strong><i class="fas fa-door-open"></i> Sali:</strong> ${room}</p>
+                    <p><strong><i class="fas fa-chalkboard-teacher"></i> Opettaja:</strong> ${teacher}</p>
+                    <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button onclick="closeModal(); showHomeworkManager();" class="btn" style="background: var(--accent-color); color: white;">
+                            <i class="fas fa-plus"></i> Lisää kotitehtävä
+                        </button>
+                        <button onclick="closeModal()" class="btn">Sulje</button>
+                    </div>
+                </div>
+            `;
+            showCustomModal(modalHtml);
+        });
+    });
 }
 
 function parseICSDate(dtStr) {
@@ -1550,7 +1582,6 @@ function updateStatistics() {
     const totalLessonsEl = document.getElementById('totalLessons');
     const sportsLessonsEl = document.getElementById('sportsLessons');
     const freeLessonsEl = document.getElementById('freeLessons');
-    
     if (!totalLessonsEl || !sportsLessonsEl || !freeLessonsEl) return;
     
     const wilmaEvents = JSON.parse(localStorage.getItem('wilmaCalendarEvents'));
@@ -1559,10 +1590,10 @@ function updateStatistics() {
         const weekDates = getWeekDates(currentWeekOffset);
         const weekISOs = weekDates.map(d => formatDateISO(d));
         
-        const weekLessons = wilmaEvents.filter(ev => weekISOs.includes(ev.dateStr));
+        // Lasketaan tilastoihin vain varsinaiset oppitunnit (ei ruokailuja/pajoja)
+        const weekLessons = wilmaEvents.filter(ev => weekISOs.includes(ev.dateStr) && !ev.isReservation);
         const totalLessons = weekLessons.length;
         const sportsLessons = weekLessons.filter(ev => ev.color === 'sports').length;
-        // Lasketaan vapaat tunnit olettaen 4 tunnin päivät (max 20 tuntia viikossa)
         const freeLessons = Math.max(0, 20 - totalLessons);
 
         totalLessonsEl.textContent = `${totalLessons} oppituntia`;
@@ -1596,20 +1627,39 @@ function updateNextLessonInfo() {
     
     const now = new Date();
     const currentDay = now.getDay();
-    const currentTime = now.getHours() * 60 + now.getMinutes();
+    const currentMins = now.getHours() * 60 + now.getMinutes();
     
     if (currentDay === 0 || currentDay === 6) {
         nextLessonInfo.innerHTML = '<i class="fas fa-arrow-right"></i><span>Seuraava: Maanantaina</span>';
         return;
     }
+
+    const wilmaEvents = JSON.parse(localStorage.getItem('wilmaCalendarEvents'));
+    if (Array.isArray(wilmaEvents) && wilmaEvents.length > 0) {
+        const todayISO = formatDateISO(now);
+        const todaysLessons = wilmaEvents
+            .filter(ev => ev.dateStr === todayISO && !ev.isReservation)
+            .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+        const nextEv = todaysLessons.find(ev => {
+            const [sh, sm] = ev.startTime.split(':').map(Number);
+            return (sh * 60 + sm) > currentMins;
+        });
+
+        if (nextEv) {
+            nextLessonInfo.innerHTML = `<i class="fas fa-arrow-right"></i><span>Seuraava: ${nextEv.startTime} ${nextEv.name} (${nextEv.room || '-'})</span>`;
+        } else {
+            nextLessonInfo.innerHTML = '<i class="fas fa-check"></i><span>Päivän tunnit ohi</span>';
+        }
+        return;
+    }
     
+    // Varajärjestelmä ilman Wilmaa
     let nextLesson = null;
     const todaySchedule = schedule[currentDay];
-    
     for (const item of todaySchedule) {
         const [startHour, startMin] = times[item.hour - 1].split(" - ")[0].split(":").map(Number);
-        const lessonStart = startHour * 60 + startMin;
-        if (lessonStart > currentTime) {
+        if ((startHour * 60 + startMin) > currentMins) {
             nextLesson = item;
             break;
         }
@@ -1621,6 +1671,26 @@ function updateNextLessonInfo() {
         nextLessonInfo.innerHTML = `<i class="fas fa-arrow-right"></i><span>Seuraava: ${time} ${subject.name}</span>`;
     } else {
         nextLessonInfo.innerHTML = '<i class="fas fa-check"></i><span>Päivän tunnit ohi</span>';
+    }
+}
+
+// Sulavampi fontinvaihto ilman ruudun välähdystä
+function applyFontImmediately(fontFamily) {
+    try {
+        document.body.style.fontFamily = fontFamily;
+        const selectors = [
+            '.modal', '.modal-content', '#settingsModal', '.settings-content',
+            '.settings-tab', '.setting-group', 'input', 'select', 'textarea',
+            'button', '.btn', '.nav-item', '.day-card', '.lesson', '.tool-card',
+            '.homework-item', '.exam-item', '.grade-item', '.note-item'
+        ];
+        selectors.forEach(selector => {
+            document.querySelectorAll(selector).forEach(el => {
+                el.style.fontFamily = fontFamily;
+            });
+        });
+    } catch (error) {
+        console.error('Virhe fontin soveltamisessa:', error);
     }
 }
 
@@ -1871,6 +1941,10 @@ function exportSchedule() {
 
 // ========== VIIKKOKOHTAINEN WILMA-KALENTERI ==========
 
+// =========================================================================
+// SOVELLUKSEN PARANNUKSET (OSA 1/4): WILMA-TUONTI & KOKEET
+// =========================================================================
+
 function importSchedule() {
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
@@ -1889,13 +1963,16 @@ function importSchedule() {
                 try {
                     const calendarEvents = parseFullWilmaICS(content);
                     localStorage.setItem('wilmaCalendarEvents', JSON.stringify(calendarEvents));
+                    
                     detectAndSavePeriodsFromWilma(calendarEvents);
+                    const addedExamsCount = syncWilmaExamsToTracker(calendarEvents);
                     
                     const scheduleDataElement = document.getElementById('scheduleData');
                     if (scheduleDataElement) {
                         scheduleDataElement.value = JSON.stringify({
                             type: "wilma_full_calendar",
                             eventCount: calendarEvents.length,
+                            importedExams: addedExamsCount,
                             importedAt: new Date().toISOString()
                         }, null, 2);
                     }
@@ -1903,7 +1980,10 @@ function importSchedule() {
                     currentWeekOffset = 0;
                     generateTimetable();
                     updateStatistics();
-                    showToast(`📅 Wilma-kalenteri tuotu (${calendarEvents.length} tuntia)!`);
+                    updateToolsSection();
+                    
+                    const examMsg = addedExamsCount > 0 ? ` ja ${addedExamsCount} koetta siirretty koelistaan` : '';
+                    showToast(`📅 Wilma tuotu (${calendarEvents.length} merkintää${examMsg})!`);
                 } catch (err) {
                     console.error(err);
                     showToast('❌ Virhe Wilma-tiedoston lukemisessa: ' + err.message);
@@ -1936,7 +2016,11 @@ function parseFullWilmaICS(icsText) {
     for (let i = 1; i < rawEvents.length; i++) {
         const block = rawEvents[i];
         const categoryMatch = block.match(/CATEGORIES:(.*)/);
-        if (!categoryMatch || !categoryMatch[1].includes('Education')) continue;
+        if (!categoryMatch) continue;
+
+        const isEducation = categoryMatch[1].includes('Education');
+        const isReservation = categoryMatch[1].includes('Reservation');
+        if (!isEducation && !isReservation) continue;
 
         const dtStartMatch = block.match(/DTSTART(?:;TZID=[^:]+)?:(\d{8}T\d{6})/);
         const dtEndMatch = block.match(/DTEND(?:;TZID=[^:]+)?:(\d{8}T\d{6})/);
@@ -1953,18 +2037,30 @@ function parseFullWilmaICS(icsText) {
         const durationMins = Math.round((endDate - startDate) / 60000);
 
         const rawSummary = summaryMatch[1].trim();
-        const codeMatch = rawSummary.match(/^([^\s(]+)/);
-        const courseCode = codeMatch ? codeMatch[1] : rawSummary;
+        let courseCode = "";
+        let fullName = rawSummary;
+
+        if (isEducation) {
+            const codeMatch = rawSummary.match(/^([^\s(]+)/);
+            courseCode = codeMatch ? codeMatch[1] : rawSummary;
+            fullName = getSubjectFullName(courseCode);
+        } else {
+            // Varaus, esim. "Ruokailuvuoro" tai "Matematiikkapaja (JPN/OY/SA) (B046)"
+            courseCode = "Varaus";
+            fullName = rawSummary.split('(')[0].trim();
+        }
 
         let room = "";
         const parenMatches = [...rawSummary.matchAll(/\(([^)]+)\)/g)];
         if (parenMatches.length >= 2) {
             room = parenMatches[parenMatches.length - 1][1];
+        } else if (parenMatches.length === 1 && isReservation) {
+            room = parenMatches[0][1];
         } else if (locMatch) {
             room = locMatch[1].trim().split(' ')[0];
         }
 
-        let teacher = parenMatches.length >= 1 ? parenMatches[0][1] : "";
+        let teacher = parenMatches.length >= 1 && isEducation ? parenMatches[0][1] : "";
         if (descMatch) {
             const descLines = descMatch[1].split('\\n');
             if (descLines.length >= 2 && descLines[1].includes(' ')) {
@@ -1978,13 +2074,14 @@ function parseFullWilmaICS(icsText) {
 
         const lessonTemplate = {
             code: courseCode,
-            name: getSubjectFullName(courseCode),
+            name: fullName,
             teacher: teacher,
             room: room,
-            color: detectSubjectColor(courseCode),
+            color: isEducation ? detectSubjectColor(courseCode) : 'event',
             startTime: startTimeStr,
             endTime: endTimeStr,
-            duration: durationMins
+            duration: durationMins,
+            isReservation: isReservation
         };
 
         const exDates = [];
@@ -2020,10 +2117,41 @@ function parseFullWilmaICS(icsText) {
     }
 
     if (expandedLessons.length === 0) {
-        throw new Error("Tiedostosta ei löytynyt oppitunteja.");
+        throw new Error("Tiedostosta ei löytynyt tapahtumia.");
     }
 
     return expandedLessons;
+}
+
+// Siirtää Wilman pitkät kokeet automaattisesti Kokeiden seuranta -työkaluun
+function syncWilmaExamsToTracker(events) {
+    const longExams = events.filter(ev => !ev.isReservation && ev.duration >= 120);
+    let addedCount = 0;
+
+    longExams.forEach(ev => {
+        const alreadyExists = examList.some(ex => ex.date === ev.dateStr && ex.subject.includes(ev.name));
+        if (!alreadyExists) {
+            examList.push({
+                id: Date.now() + Math.floor(Math.random() * 10000),
+                subject: ev.name,
+                date: ev.dateStr,
+                topic: `Kurssikoe (${ev.code}) • Sali: ${ev.room || 'Ei tietoa'}`,
+                importance: 'important',
+                time: ev.startTime,
+                notes: ev.teacher ? `Opettaja: ${ev.teacher}` : '',
+                createdAt: new Date().toISOString()
+            });
+            addedCount++;
+        }
+    });
+
+    if (addedCount > 0) {
+        localStorage.setItem('examList', JSON.stringify(examList));
+        if (typeof updateExamStats === 'function') updateExamStats();
+        if (typeof updateExamCounter === 'function') updateExamCounter();
+    }
+
+    return addedCount;
 }
 
 function detectAndSavePeriodsFromWilma(events) {
