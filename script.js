@@ -720,10 +720,9 @@ function getWeekDates(offset = 0) {
     }
     return weekDates;
 }
-
 function getISOWeekNumber(date) {
-    const targetDate = Array.isArray(date) ? date[0] : date;
-    const temp = new Date(Date.UTC(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate()));
+    const d = (date && typeof date.getFullYear === 'function') ? date : (date && date[0] ? date[0] : new Date());
+    const temp = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
     const dayNum = temp.getUTCDay() || 7;
     temp.setUTCDate(temp.getUTCDate() + 4 - dayNum);
     const yearStart = new Date(Date.UTC(temp.getUTCFullYear(), 0, 1));
@@ -2177,16 +2176,6 @@ function getWeekDates(offset = 0) {
     }
     return weekDates;
 }
-
-function getISOWeekNumber(date) {
-    const temp = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    const dayNum = temp.getUTCDay() || 7;
-    temp.setUTCDate(temp.getUTCDate() + 4 - dayNum);
-    const yearStart = new Date(Date.UTC(temp.getUTCFullYear(), 0, 1));
-    return Math.ceil((((temp - yearStart) / 86400000) + 1) / 7);
-}
-
-
 
 function applyImportedSchedule() {
     try {
