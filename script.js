@@ -722,7 +722,8 @@ function getWeekDates(offset = 0) {
 }
 
 function getISOWeekNumber(date) {
-    const temp = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const targetDate = Array.isArray(date) ? date[0] : date;
+    const temp = new Date(Date.UTC(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate()));
     const dayNum = temp.getUTCDay() || 7;
     temp.setUTCDate(temp.getUTCDate() + 4 - dayNum);
     const yearStart = new Date(Date.UTC(temp.getUTCFullYear(), 0, 1));
@@ -741,7 +742,7 @@ function generateTimetable() {
     }
 
     const weekDates = getWeekDates(currentWeekOffset);
-    const weekNum = getISOWeekNumber(weekDates);
+    const weekNum = getISOWeekNumber(weekDates[0]);
     const startStr = `${weekDates[0].getDate()}.${weekDates[0].getMonth() + 1}.`;
     const endStr = `${weekDates[4].getDate()}.${weekDates[4].getMonth() + 1}.${weekDates[4].getFullYear()}`;
 
