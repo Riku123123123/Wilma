@@ -690,49 +690,137 @@ function saveCurrentSchedule() {
 }
 
 // ========== LUKUJÄRJESTYKSEN GENEROINTI ==========
-function generateTimetable() {
-    const periodSelect = document.getElementById('periodSelect');
-    const currentPeriod = periodSelect ? parseInt(periodSelect.value, 10) : currentScheduleSlot;
-    
-    const periodSettings = JSON.parse(localStorage.getItem(`periodSettings_${currentPeriod}`)) || {};
-    const activeSchedule = periodSettings.customSchedule || (currentPeriod >= 4 ? scheduleLate : schedule);
+let currentWeekOffset = 0; // 0 = kuluva viikko, 1 = ensi viikko, -1 = viime viikko
 
+function changeWeek(offsetDelta) {
+    if (offsetDelta === 0) {
+        currentWeekOffset = 0;
+    } else {
+        currentWeekOffset += offsetDelta;
+    }
+    generateTimetable();
+    updateStatistics();
+}
+
+function getWeekDates(offset = 0) {
+    const now = new Date();
+    // Jos on viikonloppu (La=6, Su=0), näytetään oletuksena jo alkava maanantai
+    const day = now.getDay();
+    const diffToMonday = day === 0 ? 1 : (day === 6 ? 2 : 1 - day);
+    
+    const monday = new Date(now);
+    monday.setDate(now.getDate() + diffToMonday + (offset * 7));
+    monday.setHours(0, 0, 0, 0);
+
+    const weekDates = [];
+    for (let i = 0; i < 5; i++) {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        weekDates.push(d);
+    }
+    return weekDates;
+}
+
+function getISOWeekNumber(date) {
+    const temp = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = temp.getUTCDay() || 7;
+    temp.setUTCDate(temp.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(temp.getUTCFullYear(), 0, 1));
+    return Math.ceil((((temp - yearStart) / 86400000) + 1) / 7);
+}
+
+function generateTimetable() {
     const timetable = document.getElementById("timetable");
     if (!timetable) return;
+
+    const wilmaEvents = JSON.parse(localStorage.getItem('wilmaCalendarEvents'));
+    const useWilmaCalendar = Array.isArray(wilmaEvents) && wilmaEvents.length > 0;
+
+    // Lasketaan valitun viikon päivämäärät (Ma - Pe)
+    const weekDates = getWeekDates(currentWeekOffset);
+    const weekNum = getISOWeekNumber(weekDates[0]);
+    const startStr = `${weekDates[0].getDate()}.${weekDates[0].getMonth() + 1}.`;
+    const endStr = `${weekDates[4].getDate()}.${weekDates[4].getMonth() + 1}.${weekDates[4].getFullYear()}`;
+
+    // Päivitetään yläreunan päivämääräteksti näyttämään viikkonumero ja viikonpäivät
+    const periodDatesEl = document.getElementById('periodDates');
+    if (periodDatesEl && useWilmaCalendar) {
+        periodDatesEl.innerHTML = `
+            <div style="display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <button onclick="changeWeek(-1)" class="btn" style="padding: 4px 10px; font-size: 0.85rem;" title="Edellinen viikko">◀</button>
+                <span style="font-weight: 600;">Viikko ${weekNum} (${startStr} – ${endStr})</span>
+                <button onclick="changeWeek(1)" class="btn" style="padding: 4px 10px; font-size: 0.85rem;" title="Seuraava viikko">▶</button>
+                ${currentWeekOffset !== 0 ? `<button onclick="changeWeek(0)" class="btn" style="padding: 4px 10px; font-size: 0.8rem; background: var(--accent-color); color: white;">Nykyinen viikko</button>` : ''}
+            </div>
+        `;
+    }
 
     const days = ["", "Maanantai", "Tiistai", "Keskiviikko", "Torstai", "Perjantai"];
     timetable.innerHTML = "";
 
     const singleEvents = JSON.parse(localStorage.getItem('singleEvents')) || [];
+    const periodSelect = document.getElementById('periodSelect');
+    const currentPeriod = periodSelect ? parseInt(periodSelect.value, 10) : 2;
+    const fallbackSchedule = currentPeriod >= 4 ? scheduleLate : schedule;
 
     for (let d = 1; d <= 5; d++) {
+        const currentDateObj = weekDates[d - 1];
+        const dateISO = formatDateISO(currentDateObj);
+        const dateLabel = `${currentDateObj.getDate()}.${currentDateObj.getMonth() + 1}.`;
+
         const dayCard = document.createElement("div");
         dayCard.className = "day-card";
         dayCard.dataset.day = d;
-        dayCard.innerHTML = `<h2><i class="fas fa-calendar-day"></i> ${days[d]}</h2><div class="lessons-container"></div>`;
+        dayCard.innerHTML = `<h2><i class="fas fa-calendar-day"></i> ${days[d]} <span style="font-size: 0.85em; opacity: 0.7; font-weight: normal;">${dateLabel}</span></h2><div class="lessons-container"></div>`;
 
         const container = dayCard.querySelector(".lessons-container");
 
-        (activeSchedule[d] || []).forEach(item => {
-            const subj = subjects[item.row];
-            if (!subj) return;
-            const time = times[item.hour - 1];
-            const [startHour, startMin] = time.split(" - ")[0].split(":").map(Number);
+        if (useWilmaCalendar) {
+            // Haetaan juuri tämän päivämäärän tunnit Wilma-kalenterista
+            const todaysLessons = wilmaEvents.filter(ev => ev.dateStr === dateISO);
+            
+            if (todaysLessons.length === 0) {
+                container.innerHTML = `<div style="padding: 15px; text-align: center; opacity: 0.6; font-size: 0.9rem;">Ei oppitunteja</div>`;
+            } else {
+                todaysLessons.forEach(ev => {
+                    const [startHour, startMin] = ev.startTime.split(":").map(Number);
+                    container.innerHTML += `
+                        <div class="lesson ${ev.color}" data-time="${startHour}:${startMin}" data-duration="${ev.duration}">
+                            <span class="lesson-time">${ev.startTime} - ${ev.endTime}</span>
+                            <div class="lesson-main">
+                                <span class="lesson-subject">${ev.name}</span>
+                                <span class="lesson-code">${ev.code}</span>
+                            </div>
+                            <div class="lesson-info">
+                                <span class="lesson-room"><i class="fas fa-door-open"></i> ${ev.room || '-'}</span>
+                                <span class="lesson-teacher"><i class="fas fa-chalkboard-teacher"></i> ${ev.teacher || '-'}</span>
+                            </div>
+                        </div>`;
+                });
+            }
+        } else {
+            // Vanha käsin syötetty lukujärjestys varalla, jos Wilmaa ei ole tuotu
+            fallbackSchedule[d].forEach(item => {
+                const subj = subjects[item.row];
+                const time = times[item.hour - 1];
+                const [startHour, startMin] = time.split(" - ")[0].split(":").map(Number);
 
-            container.innerHTML += `
-                <div class="lesson ${subj.color}" data-time="${startHour}:${startMin}" data-duration="75">
-                    <span class="lesson-time">${time}</span>
-                    <div class="lesson-main">
-                        <span class="lesson-subject">${subj.name}</span>
-                        <span class="lesson-code">${subj.code}</span>
-                    </div>
-                    <div class="lesson-info">
-                        <span class="lesson-room"><i class="fas fa-door-open"></i> ${subj.room}</span>
-                        <span class="lesson-teacher"><i class="fas fa-chalkboard-teacher"></i> ${subj.teacher}</span>
-                    </div>
-                </div>`;
-        });
+                container.innerHTML += `
+                    <div class="lesson ${subj.color}" data-time="${startHour}:${startMin}" data-duration="75">
+                        <span class="lesson-time">${time}</span>
+                        <div class="lesson-main">
+                            <span class="lesson-subject">${subj.name}</span>
+                            <span class="lesson-code">${subj.code}</span>
+                        </div>
+                        <div class="lesson-info">
+                            <span class="lesson-room"><i class="fas fa-door-open"></i> ${subj.room}</span>
+                            <span class="lesson-teacher"><i class="fas fa-chalkboard-teacher"></i> ${subj.teacher}</span>
+                        </div>
+                    </div>`;
+            });
+        }
 
+        // Lisätään käyttäjän omat yksittäiset tapahtumat
         const dayEvents = singleEvents.filter(event => event.day === d);
         dayEvents.forEach(event => {
             const endTime = calculateEndTime(event.time, event.duration);
@@ -1355,22 +1443,39 @@ function updateStatistics() {
     
     if (!totalLessonsEl || !sportsLessonsEl || !freeLessonsEl) return;
     
-    let totalLessons = 0;
-    let sportsLessons = 0;
-    let freeLessons = 0;
+    const wilmaEvents = JSON.parse(localStorage.getItem('wilmaCalendarEvents'));
     
-    for (let day = 1; day <= 5; day++) {
-        schedule[day].forEach(item => {
-            totalLessons++;
-            const subject = subjects[item.row];
-            if (subject.color === 'sports') sportsLessons++;
-            if (subject.name === "(Ei asetettu)" || subject.color === 'freetime') freeLessons++;
-        });
+    if (Array.isArray(wilmaEvents) && wilmaEvents.length > 0) {
+        const weekDates = getWeekDates(currentWeekOffset);
+        const weekISOs = weekDates.map(d => formatDateISO(d));
+        
+        const weekLessons = wilmaEvents.filter(ev => weekISOs.includes(ev.dateStr));
+        const totalLessons = weekLessons.length;
+        const sportsLessons = weekLessons.filter(ev => ev.color === 'sports').length;
+        // Lasketaan vapaat tunnit olettaen 4 tunnin päivät (max 20 tuntia viikossa)
+        const freeLessons = Math.max(0, 20 - totalLessons);
+
+        totalLessonsEl.textContent = `${totalLessons} oppituntia`;
+        sportsLessonsEl.textContent = `${sportsLessons} liikuntaa`;
+        freeLessonsEl.textContent = `${freeLessons} vapaata`;
+    } else {
+        let totalLessons = 0;
+        let sportsLessons = 0;
+        let freeLessons = 0;
+        
+        for (let day = 1; day <= 5; day++) {
+            schedule[day].forEach(item => {
+                totalLessons++;
+                const subject = subjects[item.row];
+                if (subject.color === 'sports') sportsLessons++;
+                if (subject.name === "(Ei asetettu)" || subject.color === 'freetime') freeLessons++;
+            });
+        }
+        
+        totalLessonsEl.textContent = `${totalLessons} oppituntia`;
+        sportsLessonsEl.textContent = `${sportsLessons} liikuntaa`;
+        freeLessonsEl.textContent = `${freeLessons} vapaata`;
     }
-    
-    totalLessonsEl.textContent = `${totalLessons} oppituntia`;
-    sportsLessonsEl.textContent = `${sportsLessons} liikuntaa`;
-    freeLessonsEl.textContent = `${freeLessons} vapaata`;
     
     updateNextLessonInfo();
 }
@@ -1654,6 +1759,8 @@ function exportSchedule() {
     }
 }
 
+// ========== VIIKKOKOHTAINEN WILMA-KALENTERI ==========
+
 function importSchedule() {
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
@@ -1670,12 +1777,26 @@ function importSchedule() {
             
             if (file.name.endsWith('.ics') || content.includes('BEGIN:VCALENDAR')) {
                 try {
-                    const parsedData = parseWilmaICS(content);
+                    const calendarEvents = parseFullWilmaICS(content);
+                    
+                    // Tallennetaan koko lukuvuoden kalenteri suoraan localStorageen
+                    localStorage.setItem('wilmaCalendarEvents', JSON.stringify(calendarEvents));
+                    
                     const scheduleDataElement = document.getElementById('scheduleData');
                     if (scheduleDataElement) {
-                        scheduleDataElement.value = JSON.stringify(parsedData, null, 2);
+                        scheduleDataElement.value = JSON.stringify({
+                            type: "wilma_full_calendar",
+                            eventCount: calendarEvents.length,
+                            importedAt: new Date().toISOString()
+                        }, null, 2);
                     }
-                    showToast('📅 Wilman lukujärjestys luettu! Paina "Käytä tuotua järjestystä".');
+                    
+                    // Nollataan viikkosiirtymä kuluvaan viikkoon ja päivitetään näkymä
+                    currentWeekOffset = 0;
+                    generateTimetable();
+                    updateStatistics();
+                    
+                    showToast(`📅 Wilma-kalenteri tuotu (${calendarEvents.length} oppituntia)! Päivittyy nyt viikoittain.`);
                 } catch (err) {
                     console.error(err);
                     showToast('❌ Virhe Wilma-tiedoston lukemisessa: ' + err.message);
@@ -1701,65 +1822,37 @@ function importSchedule() {
     document.body.removeChild(fileInput);
 }
 
-function parseWilmaICS(icsText) {
-    const editSelect = document.getElementById('editPeriodSelect');
-    const periodSelect = document.getElementById('periodSelect');
-    const targetPeriodId = editSelect ? parseInt(editSelect.value, 10) : (periodSelect ? parseInt(periodSelect.value, 10) : 1);
-    
-    let periodStart = null;
-    let periodEnd = null;
-    if (periods[targetPeriodId]) {
-        const [sd, sm, sy] = periods[targetPeriodId].start.split('.').map(Number);
-        const [ed, em, ey] = periods[targetPeriodId].end.split('.').map(Number);
-        periodStart = new Date(sy, sm - 1, sd);
-        periodEnd = new Date(ey, em - 1, ed, 23, 59, 59);
-    }
-
+// Purkaa kaikki tapahtumat ja RRULE-toistot koko tiedoston ajalta
+function parseFullWilmaICS(icsText) {
     const rawEvents = icsText.split('BEGIN:VEVENT');
-    const parsedEvents = [];
+    const expandedLessons = [];
 
     for (let i = 1; i < rawEvents.length; i++) {
         const block = rawEvents[i];
         
-        // Otetaan vain varsinaiset oppitunnit (ohitetaan ruokailut ja pajat)
+        // Otetaan vain oppitunnit (Education)
         const categoryMatch = block.match(/CATEGORIES:(.*)/);
         if (!categoryMatch || !categoryMatch[1].includes('Education')) continue;
 
         const dtStartMatch = block.match(/DTSTART(?:;TZID=[^:]+)?:(\d{8}T\d{6})/);
+        const dtEndMatch = block.match(/DTEND(?:;TZID=[^:]+)?:(\d{8}T\d{6})/);
         const summaryMatch = block.match(/SUMMARY:(.*)/);
         const descMatch = block.match(/DESCRIPTION:(.*)/);
         const locMatch = block.match(/LOCATION:(.*)/);
+        const rruleMatch = block.match(/RRULE:(.*)/);
+        const exdateMatch = block.match(/EXDATE(?:;TZID=[^:]+)?:(.*)/);
 
-        if (!dtStartMatch || !summaryMatch) continue;
+        if (!dtStartMatch || !dtEndMatch || !summaryMatch) continue;
 
-        const dtStr = dtStartMatch[1];
-        const year = parseInt(dtStr.substring(0, 4), 10);
-        const month = parseInt(dtStr.substring(4, 6), 10) - 1;
-        const day = parseInt(dtStr.substring(6, 8), 10);
-        const hour = parseInt(dtStr.substring(9, 11), 10);
-        const minute = parseInt(dtStr.substring(11, 13), 10);
-
-        const eventDate = new Date(year, month, day, hour, minute);
-        const dayOfWeek = eventDate.getDay();
-        if (dayOfWeek < 1 || dayOfWeek > 5) continue;
-
-        // Kartoitetaan kellonaika oppituntiin 1-4
-        let slotHour = null;
-        const timeInMins = hour * 60 + minute;
-        if (timeInMins >= 480 && timeInMins <= 515) slotHour = 1;      // 08:10
-        else if (timeInMins >= 550 && timeInMins <= 600) slotHour = 2; // 09:40
-        else if (timeInMins >= 705 && timeInMins <= 750) slotHour = 3; // 12:05
-        else if (timeInMins >= 780 && timeInMins <= 830) slotHour = 4; // 13:35
-        
-        if (!slotHour) continue;
+        const startDate = parseICSDate(dtStartMatch[1]);
+        const endDate = parseICSDate(dtEndMatch[1]);
+        const durationMins = Math.round((endDate - startDate) / 60000);
 
         const rawSummary = summaryMatch[1].trim();
         const codeMatch = rawSummary.match(/^([^\s(]+)/);
         const courseCode = codeMatch ? codeMatch[1] : rawSummary;
-        
-        if (courseCode.startsWith('RO.')) continue;
 
-        // Luokka sulkeista, esim. "MAA11.2 (MHEL) (C142)" -> "C142"
+        // Luokka sulkeista
         let room = "";
         const parenMatches = [...rawSummary.matchAll(/\(([^)]+)\)/g)];
         if (parenMatches.length >= 2) {
@@ -1768,7 +1861,7 @@ function parseWilmaICS(icsText) {
             room = locMatch[1].trim().split(' ')[0];
         }
 
-        // Opettajan nimi DESCRIPTION-kentästä
+        // Opettaja DESCRIPTION-kentästä
         let teacher = parenMatches.length >= 1 ? parenMatches[0][1] : "";
         if (descMatch) {
             const descLines = descMatch[1].split('\\n');
@@ -1778,77 +1871,80 @@ function parseWilmaICS(icsText) {
             }
         }
 
-        parsedEvents.push({
-            date: eventDate,
-            dayOfWeek,
-            slotHour,
+        const startTimeStr = `${startDate.getHours().toString().padStart(2, '0')}:${startDate.getMinutes().toString().padStart(2, '0')}`;
+        const endTimeStr = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
+
+        const lessonTemplate = {
             code: courseCode,
+            name: getSubjectFullName(courseCode),
             teacher,
-            room
-        });
+            room,
+            color: detectSubjectColor(courseCode),
+            startTime: startTimeStr,
+            endTime: endTimeStr,
+            duration: durationMins
+        };
+
+        // Tarkistetaan mahdolliset poikkeuspäivät (EXDATE)
+        const exDates = [];
+        if (exdateMatch) {
+            exdateMatch[1].split(',').forEach(ex => {
+                exDates.push(ex.trim().substring(0, 8)); // YYYYMMDD
+            });
+        }
+
+        // Jos tapahtuma toistuu viikoittain (RRULE:FREQ=WEEKLY;UNTIL=...)
+        if (rruleMatch && rruleMatch[1].includes('FREQ=WEEKLY')) {
+            const untilMatch = rruleMatch[1].match(/UNTIL=(\d{8}T\d{6})/);
+            const untilDate = untilMatch ? parseICSDate(untilMatch[1]) : new Date(startDate.getTime() + 60 * 24 * 60 * 60 * 1000);
+            
+            let current = new Date(startDate);
+            while (current <= untilDate) {
+                const dateKey = formatDateYYYYMMDD(current);
+                if (!exDates.includes(dateKey)) {
+                    expandedLessons.push({
+                        ...lessonTemplate,
+                        dateStr: formatDateISO(current), // YYYY-MM-DD
+                        dayOfWeek: current.getDay()
+                    });
+                }
+                current.setDate(current.getDate() + 7);
+            }
+        } else {
+            // Yksittäinen tapahtuma
+            expandedLessons.push({
+                ...lessonTemplate,
+                dateStr: formatDateISO(startDate),
+                dayOfWeek: startDate.getDay()
+            });
+        }
     }
 
-    if (parsedEvents.length === 0) {
+    if (expandedLessons.length === 0) {
         throw new Error("Tiedostosta ei löytynyt oppitunteja.");
     }
 
-    // Suodatetaan valitun periodin tunnit
-    let filteredEvents = [];
-    if (periodStart && periodEnd) {
-        filteredEvents = parsedEvents.filter(e => e.date >= periodStart && e.date <= periodEnd);
-    }
+    return expandedLessons;
+}
 
-    // Jos periodin päivämäärät eivät täsmää, otetaan tiedoston alusta 2 viikon jakso
-    if (filteredEvents.length === 0) {
-        parsedEvents.sort((a, b) => a.date - b.date);
-        const firstDate = parsedEvents[0].date;
-        const weekEnd = new Date(firstDate.getTime() + 14 * 24 * 60 * 60 * 1000);
-        filteredEvents = parsedEvents.filter(e => e.date >= firstDate && e.date <= weekEnd);
-    }
+function parseICSDate(dtStr) {
+    const year = parseInt(dtStr.substring(0, 4), 10);
+    const month = parseInt(dtStr.substring(4, 6), 10) - 1;
+    const day = parseInt(dtStr.substring(6, 8), 10);
+    const hour = parseInt(dtStr.substring(9, 11), 10);
+    const minute = parseInt(dtStr.substring(11, 13), 10);
+    return new Date(year, month, day, hour, minute);
+}
 
-    const courseMap = new Map();
-    const subjectsObj = {};
-    const customScheduleObj = { 1: [], 2: [], 3: [], 4: [], 5: [] };
+function formatDateISO(date) {
+    const y = date.getFullYear();
+    const m = (date.getMonth() + 1).toString().padStart(2, '0');
+    const d = date.getDate().toString().padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
 
-    filteredEvents.forEach(ev => {
-        if (!courseMap.has(ev.code) && courseMap.size < 7) {
-            const rowNum = courseMap.size + 1;
-            courseMap.set(ev.code, rowNum);
-            subjectsObj[rowNum] = {
-                name: getSubjectFullName(ev.code),
-                code: ev.code,
-                teacher: ev.teacher,
-                room: ev.room,
-                color: detectSubjectColor(ev.code)
-            };
-        }
-
-        const rowNum = courseMap.get(ev.code);
-        if (rowNum) {
-            const exists = customScheduleObj[ev.dayOfWeek].some(item => item.hour === ev.slotHour);
-            if (!exists) {
-                customScheduleObj[ev.dayOfWeek].push({ row: rowNum, hour: ev.slotHour });
-            }
-        }
-    });
-
-    for (let r = 1; r <= 7; r++) {
-        if (!subjectsObj[r]) {
-            subjectsObj[r] = { name: "(Ei asetettu)", code: "", teacher: "", room: "", color: "default" };
-        }
-    }
-
-    for (let d = 1; d <= 5; d++) {
-        customScheduleObj[d].sort((a, b) => a.hour - b.hour);
-    }
-
-    return {
-        period: targetPeriodId,
-        subjects: subjectsObj,
-        customSchedule: customScheduleObj,
-        source: "Wilma iCal",
-        importedAt: new Date().toISOString()
-    };
+function formatDateYYYYMMDD(date) {
+    return formatDateISO(date).replace(/-/g, '');
 }
 
 function detectSubjectColor(code) {
@@ -1868,6 +1964,7 @@ function detectSubjectColor(code) {
     if (c.startsWith('FI')) return 'philosophy';
     if (c.startsWith('LI')) return 'sports';
     if (c.startsWith('KU') || c.startsWith('MU')) return 'arts';
+    if (c.startsWith('RO') || c.startsWith('OP')) return 'event';
     return 'default';
 }
 
@@ -1893,8 +1990,11 @@ function getSubjectFullName(code) {
     if (c.startsWith('LI')) return 'Liikunta';
     if (c.startsWith('KU')) return 'Kuvataide';
     if (c.startsWith('MU')) return 'Musiikki';
+    if (c.startsWith('RO')) return 'Ryhmänohjaus';
+    if (c.startsWith('OP')) return 'Opinto-ohjaus';
     return code;
 }
+
 
 function applyImportedSchedule() {
     try {
